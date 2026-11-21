@@ -1351,10 +1351,11 @@
         }
 
         function handleDoom() {
-            // 모든 영토 초기화
-            nationLands.koguryo = [];
-            nationLands.baekje = [];
-            nationLands.silla = [];
+            // 모든 영토 초기화 (단, 각 나라의 수도는 그대로 유지)
+            nationLands.koguryo = [capitals.koguryo];
+            nationLands.baekje = [capitals.baekje];
+            nationLands.silla = [capitals.silla];
+            hangangOwner = null; // 한강 유역도 주인 없는 땅으로 되돌림
             // 모든 점수 -300
             scores.koguryo -= 300;
             scores.baekje -= 300;
