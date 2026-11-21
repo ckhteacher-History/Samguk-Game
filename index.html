@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삼국 통일 보드게임 - 전략판</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;900&display=swap');
+        
+        body {
+            font-family: 'Noto Serif KR', 'Nanum Myeongjo', serif;
+            background-color: #1b1510;
+            overflow-x: hidden;
+        }
+
+        .board-wrapper {
+            position: relative;
+            width: 95vw;
+            max-width: 1000px;
+            margin: 10px auto;
+            background: white;
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .map-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://postfiles.pstatic.net/MjAyNjAxMjJfMjI5/MDAxNzY5MDg2MTQ2MTQ0.xdOlt7BCNy4FsdRc435_QHUiWhNDApYhrLluD8dxz1kg.LctK89PJcqGw0CbCuNSNrZ9NRv7O5zr4FlqhUwh4ehcg.JPEG/%EC%82%BC%EA%B5%AD%EC%8B%9C%EB%8C%80_%EB%B3%B4%EB%93%9C%EA%B2%8C%EC%9E%84_%EB%B0%B0%EA%B2%BD.jpeg?type=w773');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.25;
+            z-index: 0;
+            pointer-events: none;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        .card-counter-center {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 25px;
+            border-radius: 20px;
+            border: 3px dashed #78350f;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .board-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(7, 1fr);
+            gap: 4px;
+            height: 65vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.75);
+            border: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            position: relative;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            text-align: center;
+            padding: 2px;
+            min-height: 60px;
+        }
+
+        .occupied-koguryo { background-color: rgba(37, 99, 235, 0.4) !important; border-color: #2563eb !important; border-width: 3px; }
+        .occupied-baekje { background-color: rgba(220, 38, 38, 0.4) !important; border-color: #dc2626 !important; border-width: 3px; }
+        .occupied-silla { background-color: rgba(22, 163, 74, 0.4) !important; border-color: #16a34a !important; border-width: 3px; }
+        
+        .cell-item { background-color: rgba(254, 252, 232, 0.8) !important; border-color: #facc15 !important; }
+        .cell-character { background-color: rgba(120, 53, 15, 0.9) !important; border-color: #451a03 !important; color: white !important; }
+        .cell-trap { background-color: rgba(51, 65, 85, 0.9) !important; border-color: #0f172a !important; color: white !important; }
+        .cell-capital { background-color: rgba(180, 120, 0, 0.85) !important; border-color: #92400e !important; color: white !important; border-width: 3px !important; }
+        .cell-hangang {
+            background-color: rgba(14, 100, 200, 0.85) !important;
+            border-color: #0369a1 !important;
+            border-width: 3px !important;
+            color: white !important;
+            box-shadow: 0 0 0 3px #38bdf8, 0 0 14px rgba(56,189,248,0.6) !important;
+            animation: hangangPulse 2s ease-in-out infinite !important;
+        }
+        @keyframes hangangPulse {
+            0%, 100% { box-shadow: 0 0 0 3px #38bdf8, 0 0 14px rgba(56,189,248,0.5); }
+            50% { box-shadow: 0 0 0 4px #7dd3fc, 0 0 24px rgba(56,189,248,0.9); }
+        }
+        .cell-doom {
+            background: linear-gradient(135deg, #7c1500, #dc2626, #f97316, #fbbf24) !important;
+            background-size: 300% 300% !important;
+            animation: fireGlow 1s ease infinite !important;
+            border-color: #f97316 !important;
+            border-width: 3px !important;
+            color: white !important;
+            box-shadow: 0 0 18px 4px rgba(251,113,36,0.8), 0 0 40px 8px rgba(220,38,38,0.5) !important;
+        }
+        @keyframes fireGlow {
+            0%   { background-position: 0% 50%; box-shadow: 0 0 18px 4px rgba(251,113,36,0.9), 0 0 40px 8px rgba(220,38,38,0.6); }
+            50%  { background-position: 100% 50%; box-shadow: 0 0 28px 8px rgba(250,190,0,0.9), 0 0 55px 12px rgba(251,113,36,0.7); }
+            100% { background-position: 0% 50%; box-shadow: 0 0 18px 4px rgba(251,113,36,0.9), 0 0 40px 8px rgba(220,38,38,0.6); }
+        }
+
+        .player {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid white;
+            position: absolute;
+            z-index: 50;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: white;
+            line-height: 1;
+        }
+
+        .p-koguryo { background-color: #2563eb; }
+        .p-baekje { background-color: #dc2626; }
+        .p-silla { background-color: #16a34a; }
+
+        .player.active-player {
+            transform: scale(1.3);
+            z-index: 60;
+            box-shadow: 0 0 20px rgba(0,0,0,0.4);
+            border: 3px solid #fff;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dice-animation { animation: rolling 0.1s infinite; }
+        @keyframes rolling {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .card-spin { animation: spin 0.8s ease-out; }
+        @keyframes spin {
+            0% { transform: rotateY(0deg) scale(0.5); opacity: 0; }
+            100% { transform: rotateY(720deg) scale(1); opacity: 1; }
+        }
+
+        .battle-shake { animation: shake 0.4s infinite; }
+        @keyframes shake {
+            0% { transform: translate(2px, 2px); }
+            50% { transform: translate(-2px, -2px); }
+            100% { transform: translate(2px, -2px); }
+        }
+        
+        .score-pop { animation: pop 0.5s ease-out; }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+
+        /* ===== 고풍 리디자인 ===== */
+        :root { --ink:#2b1d0e; --gold:#c9a24a; --gold2:#f1d98a; --paper:#efe3c6; --paper2:#e4d3aa; }
+        body {
+            background:
+              radial-gradient(ellipse at 50% 0%, rgba(201,162,74,0.18), transparent 60%),
+              repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 6px),
+              #1b1510 !important;
+            color: var(--ink);
+        }
+        button, input { font-family: inherit; }
+        .title-wrap { padding: 6px 0 14px; }
+        .title-hj {
+            font-weight: 900; font-size: clamp(34px, 6vw, 58px); letter-spacing: 0.28em; margin-right: -0.28em;
+            color: var(--gold2); line-height: 1.1;
+            text-shadow: 0 2px 0 #6b4a12, 0 0 22px rgba(241,217,138,0.35);
+        }
+        .title-ko { color: #d9c9a0; font-weight: 600; letter-spacing: 0.3em; font-size: 13px; margin-top: 4px; }
+        .title-rule { display:flex; align-items:center; justify-content:center; gap:10px; margin: 8px auto 0; max-width: 420px; color: var(--gold); }
+        .title-rule::before, .title-rule::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+        .score-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .score-card {
+            display:flex; align-items:center; gap:10px; padding:8px 12px; text-align:left;
+            background: linear-gradient(180deg, var(--paper), var(--paper2));
+            border: 1px solid #8a6a2a; outline: 1px solid rgba(201,162,74,0.55); outline-offset: -5px;
+            border-radius: 6px; box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+        }
+        .score-card .nm-hj { font-weight:900; font-size:19px; line-height:1; letter-spacing:.08em; }
+        .score-card .nm-ko { font-size:11px; font-weight:700; opacity:.75; margin-left:5px; }
+        .score-card .st { font-size:11px; line-height:1.55; margin-top:3px; color:#4a3718; }
+        .score-card .st b { font-weight:900; }
+        .score-card svg { flex:none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
+
+        .board-wrapper {
+            background:
+              radial-gradient(ellipse at center, rgba(255,250,235,0.55), rgba(190,160,100,0.35)),
+              var(--paper) !important;
+            border: 3px double #8a6a2a !important; border-radius: 6px !important;
+            box-shadow: 0 0 0 2px #2b1d0e, 0 0 0 4px var(--gold), 0 18px 40px rgba(0,0,0,0.6) !important;
+        }
+        .map-bg { opacity: 0.32 !important; mix-blend-mode: multiply; }
+        .card-counter-center {
+            background: rgba(244,233,207,0.96) !important; border: 3px double #8a6a2a !important; border-radius: 6px !important;
+            outline: 1px solid var(--gold); outline-offset: 3px; color: var(--ink);
+        }
+        .card-counter-center p { color: #5c3d12 !important; }
+        .board-container { gap: 5px !important; }
+        .cell {
+            background: linear-gradient(180deg, rgba(247,238,215,0.92), rgba(228,211,170,0.9));
+            border: 1.5px solid #7a5a22 !important; border-radius: 3px !important;
+            color: var(--ink); gap: 1px; overflow: hidden; padding-bottom: 30px !important;
+            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.35), inset 0 0 0 3px rgba(122,90,34,0.35);
+        }
+        .cell > span { position: relative; z-index: 2; }
+        .cell .ko-main { font-weight: 900; font-size: clamp(11px, 1.05vw, 13.5px); letter-spacing: .01em; line-height: 1.15; white-space: nowrap; }
+        .cell .hj-sub { font-size: 11px; font-weight: 700; letter-spacing: .08em; opacity: .85; line-height: 1.1; }
+        .cell .seal {
+            position:absolute !important; top:2px; right:2px; width:15px; height:15px; z-index:3;
+            background:#b3201a; color:#fff3d6; font-size:10px; font-weight:900; display:flex; align-items:center; justify-content:center;
+            border-radius:2px; transform:rotate(6deg); box-shadow: 0 1px 2px rgba(0,0,0,.4);
+        }
+        .cell .seal.blue { background:#0b5a8c; }
+        .cell::after { content:''; position:absolute; inset:0; pointer-events:none; z-index:1; background-repeat:no-repeat; background-position:center; background-size:46%; background-position:center 38%; opacity:0; transition:opacity .4s; }
+        .occupied-koguryo { background: linear-gradient(180deg, rgba(120,150,230,0.62), rgba(60,90,190,0.55)) !important; border-color:#1e3a8a !important; }
+        .occupied-baekje { background: linear-gradient(180deg, rgba(235,130,120,0.62), rgba(185,50,45,0.55)) !important; border-color:#7f1d1d !important; }
+        .occupied-silla { background: linear-gradient(180deg, rgba(130,205,140,0.62), rgba(40,125,70,0.55)) !important; border-color:#14532d !important; }
+        .occupied-koguryo::after { background-image: var(--em-koguryo); opacity:.18; }
+        .occupied-baekje::after { background-image: var(--em-baekje); opacity:.18; }
+        .occupied-silla::after { background-image: var(--em-silla); opacity:.18; }
+        .cell-item { background: linear-gradient(180deg, #f8edc0, #ecd48a) !important; border-color:#b68a1c !important; }
+        .cell-character { background: linear-gradient(180deg, #6b3f1a, #44250c) !important; border-color:#2a1405 !important; color:#f4dca0 !important; }
+        .cell-trap { background: linear-gradient(180deg, #3b3f4a, #1c1f27) !important; border-color:#0b0d12 !important; color:#e5e0d0 !important; }
+        .cell-capital { background: linear-gradient(180deg, #d8a93a, #9a6a10) !important; border-color:#5c3a05 !important; color:#fff7e0 !important; text-shadow:0 1px 2px rgba(0,0,0,.55); }
+        .cell-hangang { background: linear-gradient(180deg, #2a86d0, #0b4f93) !important; color:#eaf6ff !important; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+        .cell-doom .ko-main { font-size: clamp(13px,1.3vw,16px); }
+
+        .player {
+            width: 28px !important; height: 28px !important; background: none !important; border: none !important; border-radius: 0 !important;
+            box-shadow: none !important; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.55));
+        }
+        .player svg { width: 100%; height: 100%; display:block; }
+        .player .tn {
+            position:absolute; right:-6px; bottom:-4px; min-width:12px; height:12px; padding:0 3px; border-radius:7px;
+            background:#1b1510; color:var(--gold2); border:1px solid var(--gold); font-size:9px; font-weight:900; display:flex; align-items:center; justify-content:center;
+        }
+        .player.active-player {
+            transform: scale(1.3) !important;
+            filter: drop-shadow(0 0 7px #ffe08a) drop-shadow(0 0 3px #fff) drop-shadow(0 3px 2px rgba(0,0,0,0.55)) !important;
+        }
+        .turn-panel {
+            background: linear-gradient(180deg, var(--paper), var(--paper2)) !important;
+            border: 3px double #8a6a2a !important; border-radius: 8px !important;
+            box-shadow: 0 0 0 2px #1b1510, 0 0 0 3px var(--gold), 0 10px 24px rgba(0,0,0,0.5) !important;
+        }
+        .turn-token { width:48px; height:48px; flex:none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+        #dice-btn { background: linear-gradient(180deg, #3a2a14, #1b1510) !important; border: 1px solid var(--gold); color: var(--gold2) !important; }
+        #dice-btn:hover { filter: brightness(1.2); }
+
+        .modal:not(#doom-modal) > .bg-white {
+            background: linear-gradient(180deg, #f6ecd0, #e8d8ac) !important;
+            color: var(--ink);
+            border-color: #8a6a2a !important; border-style: double !important; border-width: 5px !important; border-radius: 10px !important;
+            box-shadow: 0 0 0 2px #1b1510, 0 0 0 4px var(--gold), 0 24px 60px rgba(0,0,0,0.7) !important;
+        }
+        .modal:not(#doom-modal) > .bg-white h2, .modal:not(#doom-modal) > .bg-white h3 { letter-spacing: .04em; }
+
+        /* ===== 주사위 (고풍) ===== */
+        .dice-stage { width:60px; height:60px; perspective:360px; position:relative; margin-bottom:6px; }
+        .dice-stage::after { content:''; position:absolute; left:8px; right:8px; bottom:-8px; height:9px; border-radius:50%; background:radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%); }
+        .dice-stage.land { animation: diceLand .3s ease-out; }
+        @keyframes diceLand { 0%{transform:translateY(-6px) scale(1.08)} 55%{transform:translateY(1px) scale(.95,.92)} 100%{transform:none} }
+        .dice-cube { position:relative; width:100%; height:100%; transform-style:preserve-3d; transform: rotateX(0deg) rotateY(0deg); }
+        .dice-cube.tumble { animation: diceTumble .9s cubic-bezier(.3,.6,.4,1) forwards; }
+        @keyframes diceTumble {
+            0%   { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
+            30%  { transform: translateY(-22px) rotateX(300deg) rotateY(200deg); }
+            60%  { transform: translateY(-6px) rotateX(560deg) rotateY(420deg); }
+            80%  { transform: translateY(-12px) rotateX(calc(var(--rx) + 540deg)) rotateY(calc(var(--ry) + 560deg)); }
+            100% { transform: translateY(0) rotateX(calc(var(--rx) + 720deg)) rotateY(calc(var(--ry) + 720deg)); }
+        }
+        .dice-face {
+            position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+            font-weight:900; font-size:30px; line-height:1; color:#f1d98a; border-radius:7px;
+            background: radial-gradient(circle at 30% 22%, #8a3322, #3d120a 72%);
+            border: 2px solid #c9a24a;
+            box-shadow: inset 0 0 0 3px rgba(0,0,0,.4), inset 0 0 0 4px rgba(201,162,74,.55);
+            text-shadow: 0 1px 0 #000, 0 0 8px rgba(241,217,138,.5);
+        }
+        .dice-face::before, .dice-face::after { content:''; position:absolute; width:5px; height:5px; border-radius:50%; background:#c9a24a; opacity:.8; }
+        .dice-face::before { top:6px; left:6px; box-shadow: 40px 0 0 #c9a24a; }
+        .dice-face::after { bottom:6px; left:6px; box-shadow: 40px 0 0 #c9a24a; }
+        .dice-face.f1 { transform: translateZ(30px); }
+        .dice-face.f2 { transform: rotateY(90deg) translateZ(30px); }
+        .dice-face.f3 { transform: rotateX(90deg) translateZ(30px); }
+        .dice-face.f4 { transform: rotateX(-90deg) translateZ(30px); }
+        .dice-face.f5 { transform: rotateY(-90deg) translateZ(30px); }
+        .dice-face.f6 { transform: rotateY(180deg) translateZ(30px); }
+        #dice-btn { padding: 14px 22px 10px !important; border-radius: 10px !important; }
+        #dice-btn:active .dice-stage { transform: scale(.94); }
+        .dice-cap { font-size:12px; font-weight:900; letter-spacing:.12em; color:#f1d98a; }
+        .dice-sub { font-size:10px; font-weight:600; color:#cdb98a; letter-spacing:.06em; margin-top:1px; }
+
+        /* ===== 말 이동 트레일 ===== */
+        .trail-dot {
+            position:absolute; width:26px; height:26px; margin:-13px 0 0 -13px; border-radius:50%; pointer-events:none; z-index:45;
+            background: radial-gradient(circle, var(--tc) 0%, var(--tc) 30%, transparent 72%);
+            box-shadow: 0 0 10px 2px var(--tc);
+            animation: trailFade .65s ease-out forwards;
+        }
+        @keyframes trailFade { 0%{opacity:.85; transform:scale(1)} 100%{opacity:0; transform:scale(.15)} }
+        .trail-spark {
+            position:absolute; width:6px; height:6px; margin:-3px 0 0 -3px; pointer-events:none; z-index:46;
+            background:#fff4c2; border-radius:50%; box-shadow:0 0 8px 3px #ffd75e;
+            transform: rotate(45deg); border-radius:1px;
+            animation: sparkFly .7s ease-out forwards;
+        }
+        @keyframes sparkFly { 0%{opacity:1; transform:translate(0,0) rotate(45deg) scale(1)} 100%{opacity:0; transform:translate(var(--dx),var(--dy)) rotate(225deg) scale(.1)} }
+
+        /* ===== 아이템 뽑기 연출 ===== */
+        #fx-canvas { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:150; display:none; }
+        #fx-flash { position:fixed; inset:0; pointer-events:none; z-index:149; opacity:0;
+            background: radial-gradient(circle at var(--fx, 50% 50%), #fff 0%, rgba(255,243,190,.85) 28%, rgba(255,220,120,.25) 55%, transparent 75%); }
+        #fx-flash.go { animation: fxFlash .8s ease-out; }
+        #fx-flash.go-rare { animation: fxFlashRare 1.1s ease-out; }
+        @keyframes fxFlash { 0%{opacity:0} 14%{opacity:.95} 100%{opacity:0} }
+        @keyframes fxFlashRare { 0%{opacity:0} 10%{opacity:1; filter:hue-rotate(0)} 40%{opacity:.8; filter:hue-rotate(60deg)} 100%{opacity:0; filter:hue-rotate(200deg)} }
+
+        #item-box-closed { position:relative; width:170px; height:150px; display:flex; align-items:flex-end; justify-content:center; }
+        #item-box-closed .chest { width:170px; height:142px; overflow:visible; filter: drop-shadow(0 8px 10px rgba(0,0,0,.45)); animation: chestIdle 2.4s ease-in-out infinite; position:relative; z-index:2; }
+        #item-box-closed .chest-glow { position:absolute; left:50%; top:52%; width:230px; height:230px; margin:-115px 0 0 -115px; border-radius:50%;
+            background: radial-gradient(circle, rgba(255,226,120,.75), rgba(255,200,80,.25) 45%, transparent 70%); opacity:.35; animation: glowPulse 2.4s ease-in-out infinite; z-index:1; }
+        #item-box-closed .lid { transform-origin: 10px 48px; transition: transform .28s cubic-bezier(.2,1.4,.4,1); }
+        #item-box-closed.open .lid { transform: translate(-4px,-20px) rotate(-14deg); }
+        #item-box-closed .beam { opacity:0; transition: opacity .2s; }
+        #item-box-closed.open .beam { opacity:1; }
+        #item-box-closed.shaking .chest { animation: chestShake 1.1s linear forwards; }
+        #item-box-closed.shaking .chest-glow { animation: glowCharge 1.1s ease-in forwards; }
+        #item-box-closed.shaking.charge-rare .chest { animation-duration: 1.7s; }
+        #item-box-closed.shaking.charge-rare .chest-glow { animation: glowChargeRare 1.7s ease-in forwards; }
+        #item-box-closed.shaking.charge-rare .chest { filter: drop-shadow(0 0 14px #b38cff) drop-shadow(0 0 26px #ffd75e); }
+        @keyframes chestIdle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+        @keyframes glowPulse { 0%,100%{opacity:.3; transform:scale(.95)} 50%{opacity:.55; transform:scale(1.05)} }
+        @keyframes glowCharge { 0%{opacity:.3; transform:scale(.8)} 100%{opacity:1; transform:scale(1.7)} }
+        @keyframes glowChargeRare { 0%{opacity:.3; transform:scale(.8); filter:hue-rotate(0)} 60%{opacity:.9; transform:scale(1.5); filter:hue-rotate(40deg)} 100%{opacity:1; transform:scale(2.1); filter:hue-rotate(-30deg)} }
+        @keyframes chestShake {
+            0% { transform: translate(0.00px, -0.00px) rotate(0.00deg) scale(1.000); }
+            5% { transform: translate(-0.19px, -0.03px) rotate(-0.15deg) scale(1.004); }
+            10% { transform: translate(0.44px, -0.07px) rotate(0.35deg) scale(1.008); }
+            15% { transform: translate(-0.72px, -0.11px) rotate(-0.57deg) scale(1.012); }
+            20% { transform: translate(1.01px, -0.15px) rotate(0.81deg) scale(1.016); }
+            25% { transform: translate(-1.33px, -0.20px) rotate(-1.06deg) scale(1.020); }
+            30% { transform: translate(1.65px, -0.25px) rotate(1.32deg) scale(1.024); }
+            35% { transform: translate(-1.99px, -0.30px) rotate(-1.59deg) scale(1.028); }
+            40% { transform: translate(2.33px, -0.35px) rotate(1.86deg) scale(1.032); }
+            45% { transform: translate(-2.69px, -0.40px) rotate(-2.15deg) scale(1.036); }
+            50% { transform: translate(3.05px, -0.46px) rotate(2.44deg) scale(1.040); }
+            55% { transform: translate(-3.42px, -0.51px) rotate(-2.73deg) scale(1.044); }
+            60% { transform: translate(3.79px, -0.57px) rotate(3.03deg) scale(1.048); }
+            65% { transform: translate(-4.17px, -0.63px) rotate(-3.34deg) scale(1.052); }
+            70% { transform: translate(4.56px, -0.68px) rotate(3.65deg) scale(1.056); }
+            75% { transform: translate(-4.96px, -0.74px) rotate(-3.97deg) scale(1.060); }
+            80% { transform: translate(5.36px, -0.80px) rotate(4.28deg) scale(1.064); }
+            85% { transform: translate(-5.76px, -0.86px) rotate(-4.61deg) scale(1.068); }
+            90% { transform: translate(6.17px, -0.93px) rotate(4.93deg) scale(1.072); }
+            95% { transform: translate(-6.58px, -0.99px) rotate(-5.27deg) scale(1.076); }
+            100% { transform: translate(7.00px, -1.05px) rotate(5.60deg) scale(1.080); }
+        }
+
+        /* 결과 카드 */
+        #item-result-modal { overflow: hidden; }
+        #item-result-modal .rays { position:absolute; left:50%; top:50%; width:1500px; height:1500px; margin:-750px 0 0 -750px; pointer-events:none; display:none;
+            -webkit-mask-image: radial-gradient(circle, #000 6%, transparent 62%); mask-image: radial-gradient(circle, #000 6%, transparent 62%); }
+        #item-result-modal .rays.r1 { background: repeating-conic-gradient(from 0deg, rgba(255,226,120,.62) 0deg 5deg, transparent 5deg 22deg); animation: spinRays 16s linear infinite; }
+        #item-result-modal .rays.r2 { background: repeating-conic-gradient(from 11deg, rgba(190,140,255,.5) 0deg 4deg, transparent 4deg 30deg); animation: spinRays 22s linear infinite reverse; }
+        #item-result-modal.is-rare .rays, #item-result-modal.is-common .rays.r1 { display:block; }
+        #item-result-modal.is-common .rays.r1 { opacity:.38; }
+        @keyframes spinRays { to { transform: rotate(360deg); } }
+        #item-result-card { position:relative; z-index:3; }
+        #item-result-card.pop { animation: cardPop .75s cubic-bezier(.2,1.3,.4,1); }
+        @keyframes cardPop { 0%{ transform: scale(.2) rotate(-12deg); opacity:0 } 60%{ transform: scale(1.08) rotate(2deg); opacity:1 } 100%{ transform: scale(1) rotate(0) } }
+        #item-result-card.rare-card {
+            background: linear-gradient(135deg, #fff7d6, #f5da82 38%, #fff3b8 58%, #ebc35c) !important;
+            animation: cardPop .75s cubic-bezier(.2,1.3,.4,1), rareGlow 2.2s ease-in-out .75s infinite;
+        }
+        @keyframes rareGlow {
+            0%,100% { box-shadow: 0 0 0 2px #1b1510, 0 0 0 4px #f1d98a, 0 0 30px 8px rgba(255,215,94,.85), 0 0 70px 20px rgba(255,190,60,.45); }
+            50% { box-shadow: 0 0 0 2px #1b1510, 0 0 0 4px #fff3b8, 0 0 36px 12px rgba(190,140,255,.85), 0 0 90px 28px rgba(120,220,255,.4); }
+        }
+        .item-frame { position:relative; width:11rem; height:11rem; border-radius:1rem; overflow:hidden; }
+        .item-frame #item-img { width:100%; height:100%; }
+        .item-frame .shine { position:absolute; inset:0; pointer-events:none; border-radius:inherit; overflow:hidden; }
+        .item-frame .shine::after { content:''; position:absolute; top:-20%; bottom:-20%; width:45%; left:-60%;
+            background: linear-gradient(110deg, transparent 0%, rgba(255,255,255,.85) 50%, transparent 100%); transform: skewX(-18deg); animation: shineSweep 1.4s ease-out .5s 1 forwards; }
+        .is-rare .item-frame .shine::after { animation: shineSweep 2.4s ease-in-out .5s infinite; }
+        @keyframes shineSweep { 0%{ left:-60% } 100%{ left:130% } }
+        .item-frame .holo { position:absolute; inset:0; pointer-events:none; display:none; border-radius:inherit;
+            background: linear-gradient(115deg, transparent 15%, rgba(255,0,150,.45) 32%, rgba(0,210,255,.45) 48%, rgba(255,235,0,.45) 64%, transparent 82%);
+            background-size: 260% 260%; mix-blend-mode: color-dodge; animation: holoMove 3.2s linear infinite; }
+        .is-rare .item-frame .holo { display:block; }
+        @keyframes holoMove { 0%{ background-position: 0% 0% } 100%{ background-position: 100% 100% } }
+        .item-rarity { display:inline-block; font-weight:900; letter-spacing:.14em; font-size:12px; padding:3px 14px; border-radius:999px; margin-bottom:8px; }
+        .is-common .item-rarity { background:#2b1d0e; color:#f1d98a; border:1px solid #c9a24a; }
+        .is-rare .item-rarity { font-size:15px; color:#2a1405; border:1px solid #fff3b8;
+            background: linear-gradient(100deg, #f1b83a, #fff3b8, #ff9bd9, #9be8ff, #f1b83a); background-size: 300% 100%; animation: rarityShimmer 2s linear infinite; box-shadow: 0 0 14px rgba(255,215,94,.9); }
+        @keyframes rarityShimmer { to { background-position: 300% 0 } }
+        .is-rare #item-name { background: linear-gradient(100deg, #7a4a00, #d9a100, #7a4a00); -webkit-background-clip:text; background-clip:text; color: transparent !important; text-shadow:none; }
+
+        .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
+        .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
+        .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
+        .cell { padding-bottom: clamp(24px, 3.9vh, 32px) !important; }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- Header & Scoreboard -->
+    <div class="max-w-5xl mx-auto text-center mb-4">
+        <div class="title-wrap">
+            <h1 class="title-hj">三國統一</h1>
+            <p class="title-ko">삼국 통일 : 전략 연합전</p>
+            <div class="title-rule"><span style="font-size:11px;letter-spacing:.4em;">高 句 麗 ・ 百 濟 ・ 新 羅</span></div>
+        </div>
+        <div class="score-grid">
+            <div class="score-card" style="color:#1e3a8a;">
+                <span data-emblem="koguryo" data-size="44"></span>
+                <div>
+                    <div><span class="nm-hj">고구려</span><span class="nm-ko">高句麗 · 靑</span></div>
+                    <div class="st">領土 <b id="land-koguryo">2</b> ｜ 點數 <b id="score-koguryo">0</b><br>人物 <b id="cards-koguryo">0</b>장</div>
+                </div>
+            </div>
+            <div class="score-card" style="color:#8b1a1a;">
+                <span data-emblem="baekje" data-size="44"></span>
+                <div>
+                    <div><span class="nm-hj">백제</span><span class="nm-ko">百濟 · 赤</span></div>
+                    <div class="st">領土 <b id="land-baekje">2</b> ｜ 點數 <b id="score-baekje">0</b><br>人物 <b id="cards-baekje">0</b>장</div>
+                </div>
+            </div>
+            <div class="score-card" style="color:#14532d;">
+                <span data-emblem="silla" data-size="44"></span>
+                <div>
+                    <div><span class="nm-hj">신라</span><span class="nm-ko">新羅 · 綠</span></div>
+                    <div class="st">領土 <b id="land-silla">2</b> ｜ 點數 <b id="score-silla">0</b><br>人物 <b id="cards-silla">0</b>장</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Board Area -->
+    <div class="board-wrapper">
+        <div id="map-bg" class="map-bg"></div>
+        <div class="card-counter-center">
+            <p class="text-xs font-bold text-amber-900 mb-1">人物 · 남은 인물 카드</p>
+            <p id="remaining-cards" class="text-3xl font-black text-amber-900">21</p>
+        </div>
+        <div id="game-board" class="board-container"></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="turn-panel max-w-md mx-auto mt-6 flex items-center justify-between p-4">
+        <div class="flex items-center gap-4">
+            <div id="current-turn-indicator" class="turn-token"></div>
+            <div>
+                <p class="text-xs text-slate-600 font-bold">現在 차례</p>
+                <p id="turn-name" class="text-lg font-black"></p>
+            </div>
+        </div>
+        <button id="dice-btn" onclick="rollDice()" class="text-white font-black rounded-xl transition-all active:scale-95 flex flex-col items-center">
+            <div class="dice-stage" id="dice-stage">
+                <div class="dice-cube" id="dice-cube">
+                    <div class="dice-face f1">一</div><div class="dice-face f2">二</div><div class="dice-face f3">三</div>
+                    <div class="dice-face f4">四</div><div class="dice-face f5">五</div><div class="dice-face f6">六</div>
+                </div>
+            </div>
+            <span class="dice-cap">擲 骰 <span id="dice-result" style="color:#fff4c2">·</span></span>
+            <span class="dice-sub">주사위 굴리기</span>
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <!-- 선생님 질문 모달 -->
+    <div id="quiz-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-slate-800 text-center">
+            <div class="flex justify-between items-center mb-4">
+                <span id="quiz-region" class="bg-slate-100 px-4 py-1 rounded-full text-sm font-bold text-slate-700">지역명</span>
+                <span id="quiz-mode" class="text-blue-600 font-black">영토 점령 퀴즈</span>
+            </div>
+            <div class="text-5xl mb-4">📢</div>
+            <h2 class="text-2xl font-black text-slate-800 mb-2">선생님의 질문에</h2>
+            <h2 class="text-2xl font-black text-slate-800 mb-8">답해주세요!</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <button id="quiz-correct-btn" class="bg-green-500 hover:bg-green-600 active:scale-95 text-white py-5 rounded-2xl font-black text-2xl transition-all shadow-lg">
+                    ✅ 정답
+                </button>
+                <button id="quiz-wrong-btn" class="bg-red-500 hover:bg-red-600 active:scale-95 text-white py-5 rounded-2xl font-black text-2xl transition-all shadow-lg">
+                    ❌ 오답
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 오답 시 국가 선택 모달 -->
+    <div id="nation-pick-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-amber-500 text-center">
+            <div class="text-5xl mb-4">🏆</div>
+            <h2 class="text-xl font-black text-slate-800 mb-2">답을 맞춘 국가는</h2>
+            <h2 class="text-xl font-black text-slate-800 mb-8">어디인가요?</h2>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="giveTerritory('koguryo')" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg flex flex-col items-center gap-1">
+                    <span class="text-3xl">高</span>
+                    <span>고구려</span>
+                </button>
+                <button onclick="giveTerritory('baekje')" class="bg-red-600 hover:bg-red-700 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg flex flex-col items-center gap-1">
+                    <span class="text-3xl">百</span>
+                    <span>백제</span>
+                </button>
+                <button onclick="giveTerritory('silla')" class="bg-green-600 hover:bg-green-700 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg flex flex-col items-center gap-1">
+                    <span class="text-3xl">新</span>
+                    <span>신라</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 가위바위보 모달 -->
+    <div id="rps-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-purple-500 text-center">
+            <div class="text-5xl mb-3">✂️🪨📄</div>
+            <h2 class="text-2xl font-black text-purple-700 mb-1">교사와 가위바위보!</h2>
+            <p id="rps-region" class="bg-purple-100 inline-block px-4 py-1 rounded-full text-sm font-bold text-purple-700 mb-6"></p>
+            <p class="text-slate-600 font-bold mb-6">선생님과 가위바위보를 해서<br>이기면 영토를 점령합니다!</p>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="rpsResult(true)" class="bg-purple-500 hover:bg-purple-600 active:scale-95 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-lg">
+                    🏆 승리
+                </button>
+                <button onclick="rpsResult(false)" class="bg-slate-400 hover:bg-slate-500 active:scale-95 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-lg">
+                    💀 패배
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="char-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-4 border-amber-900 text-center">
+            <h2 class="text-2xl font-black text-amber-900 mb-2">📜 인물 뽑기</h2>
+            <p class="text-slate-600 mb-6 font-bold">남은 카드: <span id="modal-remaining">21</span>장</p>
+            <div class="mb-6 flex justify-center">
+                <div id="char-card-back" class="w-40 h-56 bg-amber-800 rounded-xl flex items-center justify-center text-white border-4 border-amber-600 shadow-xl">
+                    <span class="text-5xl">👤</span>
+                </div>
+            </div>
+            <button id="draw-char-btn" onclick="drawCharacter()" class="bg-amber-900 text-white w-full py-4 rounded-xl font-black text-xl hover:bg-amber-800 shadow-lg">인물 뽑기!</button>
+        </div>
+    </div>
+
+    <!-- 아이템 뽑기 모달 -->
+    <div id="item-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-4 border-yellow-500 text-center">
+            <h2 class="text-2xl font-black text-yellow-600 mb-2">💎 아이템 뽑기</h2>
+            <p class="text-slate-600 mb-6 font-bold">삼국의 보물을 찾아라!</p>
+            <div class="mb-6 flex justify-center">
+                <div id="item-box-closed">
+                    <div class="chest-glow"></div>
+                    <svg class="chest" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+                        <polygon class="beam" points="22,50 98,50 118,-70 2,-70" fill="url(#bg1)" opacity=".9"/>
+                        <defs><linearGradient id="bg1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#fff6c0" stop-opacity=".95"/><stop offset="1" stop-color="#fff6c0" stop-opacity="0"/></linearGradient>
+                        <linearGradient id="wd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4a1c"/><stop offset="1" stop-color="#4f270b"/></linearGradient></defs>
+                        <rect x="10" y="48" width="100" height="44" rx="5" fill="url(#wd)" stroke="#2a1405" stroke-width="2"/>
+                        <path d="M10 62 H110 M10 76 H110" stroke="#2a1405" stroke-opacity=".35" stroke-width="1"/>
+                        <rect x="26" y="48" width="9" height="44" fill="#d4a437" stroke="#7a5412" stroke-width="1"/>
+                        <rect x="85" y="48" width="9" height="44" fill="#d4a437" stroke="#7a5412" stroke-width="1"/>
+                        <rect x="8" y="86" width="104" height="8" rx="3" fill="#d4a437" stroke="#7a5412" stroke-width="1"/>
+                        <g class="lid">
+                            <path d="M10 48 Q10 14 60 14 Q110 14 110 48 Z" fill="url(#wd)" stroke="#2a1405" stroke-width="2"/>
+                            <path d="M26 46 Q27 22 38 17 L38 47Z M94 46 Q93 22 82 17 L82 47Z" fill="#d4a437" stroke="#7a5412" stroke-width="1"/>
+                            <rect x="8" y="42" width="104" height="8" rx="3" fill="#d4a437" stroke="#7a5412" stroke-width="1"/>
+                            <rect x="50" y="38" width="20" height="22" rx="4" fill="#f1d27a" stroke="#7a5412" stroke-width="1.5"/>
+                            <circle cx="60" cy="47" r="3" fill="#3a1a05"/><rect x="58.8" y="48" width="2.4" height="7" fill="#3a1a05"/>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+            <button id="draw-item-btn" onclick="drawArtifact()" class="bg-yellow-500 text-white w-full py-4 rounded-xl font-black text-xl hover:bg-yellow-600 shadow-lg">보물함 열기!</button>
+        </div>
+    </div>
+
+    <!-- 아이템 결과 모달 -->
+    <div id="item-result-modal" class="modal">
+        <div class="rays r1"></div><div class="rays r2"></div>
+        <div id="item-result-card" class="bg-white p-6 rounded-3xl max-w-sm w-full mx-4 shadow-2xl border-8 border-yellow-400 text-center card-spin" style="max-height:90vh; overflow-y:auto;">
+            <div id="item-rarity" class="item-rarity">一般 · 일반 유물</div>
+            <div id="item-img-wrap" class="mb-3 flex justify-center">
+                <div class="item-frame border-2 border-yellow-200 shadow">
+                    <div id="item-img" class="bg-amber-50" style="background-size:contain; background-repeat:no-repeat; background-position:center;"></div>
+                    <div class="shine"></div><div class="holo"></div>
+                </div>
+            </div>
+            <div id="item-nat-badge" class="hidden"></div>
+            <h2 id="item-name" class="text-2xl font-black mb-2 text-slate-800">보물이름</h2>
+            <p id="item-desc" class="text-sm text-slate-600 font-bold leading-relaxed mb-3 text-left px-1"></p>
+            <p class="text-base font-black text-yellow-600 mb-4">+30점 보너스 획득!</p>
+            <button onclick="closeItemResult()" class="bg-slate-800 text-white w-full py-4 rounded-xl font-black text-xl">확인</button>
+        </div>
+    </div>
+    
+    <div id="char-result-modal" class="modal">
+        <div id="char-result-card" class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-8 text-center card-spin">
+            <div id="char-nation-badge" class="inline-block px-4 py-1 rounded-full text-white font-bold text-sm mb-4">국가명</div>
+            <div class="text-7xl mb-4">👑</div>
+            <h2 id="char-name" class="text-4xl font-black mb-2">이름</h2>
+            <p id="char-points-msg" class="text-lg font-black text-amber-600 mb-2">+50점 획득!</p>
+            <p id="char-drawer-msg" class="text-sm font-bold text-slate-500 mb-4">(뽑은 팀 +20점 보너스)</p>
+            <p id="char-desc" class="text-slate-700 font-bold mb-6 text-sm text-left px-2">설명</p>
+            <button onclick="closeCharResult()" class="bg-slate-800 text-white w-full py-4 rounded-xl font-black text-xl">확인</button>
+        </div>
+    </div>
+    
+    <div id="battle-modal" class="modal">
+        <div id="battle-modal-inner" class="bg-white p-5 rounded-3xl max-w-2xl w-full mx-4 shadow-2xl border-4 border-slate-800 text-center">
+            <h2 id="battle-modal-title" class="text-2xl font-black mb-1">⚔️ 전투 발생! ⚔️</h2>
+            <p id="battle-modal-subtitle" class="text-sm font-bold text-slate-500 mb-4"></p>
+            <canvas id="battle-canvas" width="720" height="320" class="w-full rounded-2xl border-2 border-slate-700 shadow-inner mb-3" style="aspect-ratio:720/320; background:#2e2347;"></canvas>
+            <div class="hidden">
+                <div id="attacker-unit" class="flex flex-col items-center">
+                    <div id="attacker-char-box" class="w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-2 shadow-inner border-2 border-white"></div>
+                    <span class="font-bold text-sm">공격팀</span>
+                </div>
+                <div class="text-3xl font-black italic text-slate-400">VS</div>
+                <div id="defender-unit" class="flex flex-col items-center">
+                    <div id="defender-char-box" class="w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-2 shadow-inner border-2 border-white"></div>
+                    <span class="font-bold text-sm">수비팀</span>
+                </div>
+            </div>
+            <!-- 확률 바 -->
+            <div class="mb-4 px-2">
+                <div class="flex justify-between text-xs font-black mb-1">
+                    <span id="attacker-prob-label" class="text-red-500"></span>
+                    <span id="defender-prob-label" class="text-blue-500"></span>
+                </div>
+                <div class="w-full h-5 rounded-full overflow-hidden flex border-2 border-slate-200">
+                    <div id="attacker-prob-bar" class="h-full bg-red-500 transition-all duration-500"></div>
+                    <div id="defender-prob-bar" class="h-full bg-blue-500 transition-all duration-500"></div>
+                </div>
+            </div>
+            <p id="battle-score-desc" class="text-xs text-red-500 font-bold mb-4"></p>
+            <button id="start-battle-btn" onclick="executeBattle()" class="bg-red-600 text-white w-full py-4 rounded-xl font-black text-xl hover:bg-red-700 shadow-lg">전투 시작!</button>
+        </div>
+    </div>
+    
+    <div id="battle-result-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-4 border-slate-800 text-center">
+            <h2 class="text-2xl font-black mb-4">⚔️ 결과 알림 ⚔️</h2>
+            <div id="battle-result-content" class="text-lg mb-6 leading-relaxed"></div>
+            <button onclick="closeBattleResult()" class="bg-slate-800 text-white w-full py-4 rounded-xl font-black text-xl">확인</button>
+        </div>
+    </div>
+
+    <!-- 한강 유역 점령 특별 팝업 -->
+    <div id="hangang-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-blue-500 text-center" style="box-shadow: 0 0 40px rgba(56,189,248,0.5);">
+            <div class="text-6xl mb-3">🌊</div>
+            <p id="hangang-nation" class="font-black text-2xl mb-2"></p>
+            <h2 class="text-xl font-black text-blue-700 mb-4">한반도의 요충지인<br>한강 유역을 차지했습니다!</h2>
+            <p class="text-slate-500 font-bold text-sm mb-6">삼국의 패권을 가를 중요한 거점을 확보했습니다.</p>
+            <button onclick="closeHangangModal()" class="bg-blue-600 text-white w-full py-4 rounded-xl font-black text-xl hover:bg-blue-700">확인</button>
+        </div>
+    </div>
+
+    <div id="trap-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-4 border-red-600 text-center">
+            <div class="text-5xl mb-4">⚠️</div>
+            <h2 id="trap-title" class="text-2xl font-black text-red-600 mb-2">함정 발생!</h2>
+            <div id="trap-content" class="text-lg mb-6 leading-relaxed font-bold text-slate-800"></div>
+            <button onclick="closeTrapModal()" class="bg-red-600 text-white w-full py-4 rounded-xl font-black text-xl">운명에 따르겠습니다</button>
+        </div>
+    </div>
+
+    <!-- 대멸망 모달 -->
+    <div id="doom-modal" class="modal">
+        <div class="text-center mx-4 w-full max-w-lg" style="background: linear-gradient(135deg,#1a0000,#3b0000,#7c1500,#1a0000); border: 4px solid #f97316; border-radius: 2rem; padding: 2.5rem; box-shadow: 0 0 60px 20px rgba(249,115,22,0.7), 0 0 120px 40px rgba(220,38,38,0.5); animation: fireGlow 1s ease infinite;">
+            <div class="text-6xl mb-2" style="animation: shake 0.3s infinite;">🔥</div>
+            <h2 class="font-black mb-1" style="font-size:2.2rem; color:#fbbf24; text-shadow:0 0 10px #f97316,0 0 30px #dc2626; animation: fireGlow 0.8s ease infinite;">대 멸 망</h2>
+            <p class="font-black mb-4" style="color:#fed7aa; font-size:1rem;">삼한이 불길에 휩싸였습니다!</p>
+            <div class="rounded-2xl p-4 mb-4" style="background:rgba(0,0,0,0.5); border:2px solid #f97316;">
+                <p class="font-black text-2xl mb-2" style="color:#f97316;">💀 모든 영토 초기화</p>
+                <p class="font-black text-2xl" style="color:#fca5a5;">💀 전 국가 각 -300점</p>
+            </div>
+            <p class="mb-6 font-bold" style="color:#fdba74;">고구려 · 백제 · 신라<br>모두가 잿더미가 되었습니다</p>
+            <button onclick="closeDoomModal()" class="w-full py-4 rounded-xl font-black text-xl" style="background: linear-gradient(90deg,#dc2626,#f97316,#dc2626); color:white; border:none; box-shadow:0 0 20px rgba(249,115,22,0.6);">잿더미에서 다시 시작...</button>
+        </div>
+    </div>
+
+    <div id="toast-msg" class="fixed bottom-24 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-2 rounded-full font-bold text-sm shadow-xl z-[200] opacity-0 transition-opacity pointer-events-none">메시지</div>
+
+    <script>
+        const players = [
+            { id: 0, nation: "koguryo", name: "고구려 1팀", char: "高", teamNo: "1팀", pos: 0 },   
+            { id: 1, nation: "koguryo", name: "고구려 2팀", char: "高", teamNo: "2팀", pos: 4 },   
+            { id: 2, nation: "baekje", name: "백제 1팀", char: "百", teamNo: "1팀", pos: 12 },    
+            { id: 3, nation: "baekje", name: "백제 2팀", char: "百", teamNo: "2팀", pos: 14 },    
+            { id: 4, nation: "silla", name: "신라 1팀", char: "新", teamNo: "1팀", pos: 20 },     
+            { id: 5, nation: "silla", name: "신라 2팀", char: "新", teamNo: "2팀", pos: 25 }      
+        ];
+
+        const turnOrder = [0, 2, 4, 1, 3, 5];
+        let turnIndex = 0;
+
+        const nationLands = { koguryo: [0, 4], baekje: [12, 14], silla: [20, 25] };
+        const scores = { koguryo: 0, baekje: 0, silla: 0 };
+        const nationCards = { koguryo: 0, baekje: 0, silla: 0 }; 
+        const nationNamesKo = { koguryo: "고구려", baekje: "백제", silla: "신라" };
+        const nationChars = { koguryo: "高", baekje: "百", silla: "新" };
+
+        const regions = [
+            "국내성", "안시성", "요동성", "아이템 뽑기", "평양성", "함정", "인물 뽑기", "졸본성", "아이템 뽑기", "압록강", 
+            "위례성", "웅진성", "사비성", "아이템 뽑기", "황산벌", "인물 뽑기", "백마강", "아이템 뽑기", "대멸망", "한강 유역",     
+            "경주", "함정", "불국사", "석굴암", "아이템 뽑기", "황룡사", "관산성", "인물 뽑기", "아이템 뽑기", "우산국(독도)" 
+        ];
+
+        const artifacts = [
+            { name: "칠지도", img: "https://drive.google.com/thumbnail?id=1QYpzEnB3g0s-QohvE8F7nAi-BlWashv7&sz=w400", desc: "백제가 왜왕에게 하사한 철제 칼로, 가지 모양의 칼날이 7개 달려 있습니다. 백제와 왜의 외교 관계를 보여주는 중요한 유물입니다." },
+            { name: "백제금동대향로", img: "https://drive.google.com/thumbnail?id=1YEBmrxByDoNfFVWAITpBRdkaVBuLpoF2&sz=w400", desc: "부여 능산리 절터에서 출토된 백제의 향로입니다. 용이 받치고 봉황이 올라선 화려한 조형미로 백제 공예 기술의 최고 걸작으로 꼽힙니다." },
+            { name: "광개토대왕릉비", img: "https://drive.google.com/thumbnail?id=1nfGNR210aIvhdSlKFe0P-szizfBaqI5E&sz=w400", desc: "고구려 장수왕이 아버지 광개토대왕의 업적을 기리기 위해 세운 비석입니다. 높이 6.39m의 거대한 비로, 고구려의 정복 활동과 역사가 상세히 기록되어 있습니다." },
+            { name: "석가탑", img: "https://drive.google.com/thumbnail?id=1ZQ6GoIpOllxuFXha-f2PXiH1JlgqaKib&sz=w400", desc: "경주 불국사에 있는 신라 시대의 삼층석탑입니다. 무영탑이라고도 불리며, 균형 잡힌 비례미로 한국 석탑의 전형으로 평가받습니다." },
+            { name: "다보탑", img: "https://drive.google.com/thumbnail?id=1IWsSCAxdu02Q-T1OvDOdUsIV_ZT-ofi9&sz=w400", desc: "경주 불국사에 있는 신라 시대의 석탑입니다. 복잡하고 화려한 구조로 석가탑과 대비를 이루며, 신라 석조 기술의 정수를 보여줍니다." },
+            { name: "호우명 그릇", img: "https://drive.google.com/thumbnail?id=13Ob1RlUUr9ym_YAGO0YGk9GPV6pLwoRm&sz=w400", desc: "경주 호우총에서 출토된 청동 그릇으로, 바닥에 '광개토대왕'을 뜻하는 명문이 새겨져 있습니다. 고구려와 신라의 긴밀한 관계를 증명하는 유물입니다." },
+            { name: "천마도", img: "https://drive.google.com/thumbnail?id=1PJ8IP9hlrkhGCOJmnyGbS2fr5Ed_PGNP&sz=w400", desc: "경주 천마총에서 출토된 신라의 말 그림입니다. 자작나무 껍질에 그려진 하늘을 나는 백마의 모습으로, 현존하는 신라 유일의 회화 작품입니다." },
+            { name: "무령왕릉 금제 관장식", img: "https://drive.google.com/thumbnail?id=1ZHEUbfm1ToTZJ3GRF25zO-Xj31be1bNi&sz=w400", desc: "공주 무령왕릉에서 출토된 백제 왕의 금관 장식입니다. 불꽃 모양의 화려한 금판으로, 백제 왕실의 높은 공예 수준을 보여줍니다." },
+            { name: "신라 금관", img: "https://drive.google.com/thumbnail?id=1fbx2Cc9WOKCaEwrpJMa9w7cQwCZdMsSF&sz=w400", desc: "경주 금관총에서 출토된 신라의 순금 왕관입니다. 나뭇가지와 사슴뿔 모양의 장식이 달려 있으며, 신라 왕실의 권위와 화려한 황금 문화를 상징합니다." },
+            { name: "고구려 덕흥리 고분벽화", img: "https://drive.google.com/thumbnail?id=1DHpI0DeDvjVjytWOU9zCgNybW2Obh7En&sz=w400", desc: "평안남도 덕흥리에 있는 고구려 고분의 벽화입니다. 무덤 주인의 생전 생활과 고구려의 관직 체계, 당시 사회상을 생생하게 전해주는 귀중한 역사 자료입니다." },
+            { name: "익산 미륵사지 석탑", img: "https://drive.google.com/thumbnail?id=1lqkHL4UW2oUNYAjTSbceoPvKVbth-qlB&sz=w400", desc: "백제 무왕 때 창건된 미륵사에 남아있는 석탑입니다. 현존하는 한국 최대·최고(最古)의 석탑으로, 목탑에서 석탑으로 넘어가는 과도기적 형태를 보여줍니다." },
+            { name: "첨성대", img: "https://drive.google.com/thumbnail?id=1r8JUA0E7-PPVFdw4EIL7pBEvv0rzbIb8&sz=w400", desc: "신라 선덕여왕 때 건립된 동양 최고(最古)의 천문 관측대입니다. 362개의 돌로 쌓아올린 원통형 구조물로, 신라의 과학 기술 수준을 보여줍니다." },
+            { name: "가야 판갑옷", img: "https://drive.google.com/thumbnail?id=1Zho735zqFdwN-dKLOCnOfMX2bVBXS1JN&sz=w400", desc: "가야의 철제 판금 갑옷입니다. 가야가 뛰어난 철 생산 기술을 보유했음을 증명하며, 당시 가야 전사들의 높은 무장 수준을 보여주는 유물입니다." },
+            { name: "부여 외리 문양전 일괄", img: "https://drive.google.com/thumbnail?id=1P7ZlOfvGnMvliNqsEhbF6s9ixpUfSPYI&sz=w400", desc: "충남 부여 외리에서 출토된 백제의 무늬 벽돌 모음입니다. 산수·봉황·용·연꽃 등 다양한 무늬가 새겨져 있어 백제인의 자연관과 예술 감각을 엿볼 수 있습니다." },
+            { name: "고구려 연가 7년명 금동여래입상", img: "https://drive.google.com/thumbnail?id=1tMlY47TdNVtDprM_VqwZMrGPkzwiVSFC&sz=w400", desc: "고구려에서 제작된 금동 불상으로, '연가 7년'이라는 제작 연도가 새겨져 있습니다. 강인하면서도 온화한 표정이 특징이며, 고구려 불교 미술의 수준을 잘 보여줍니다." },
+            { name: "가야 오리문양 토기", img: "https://drive.google.com/thumbnail?id=1ocVKdtGUXpmEx7XTwqfqA_qb8rN0nVb_&sz=w400", desc: "가야에서 제작된 오리 모양의 토기입니다. 실용성과 예술성을 함께 갖춘 가야 토기 문화의 특징을 잘 보여주며, 가야인들의 생활과 미적 감각을 전해줍니다." },
+            { name: "백제 무령왕릉 석수", img: "https://drive.google.com/thumbnail?id=19VNDN4s9AgWjx5ZOGb83aIh1ailPQeY5&sz=w400", desc: "공주 무령왕릉 입구를 지키던 돌로 만든 상상의 동물입니다. 무덤을 수호하는 역할을 하며, 중국 남조의 영향을 받으면서도 백제만의 독창성을 보여줍니다." },
+            { name: "신라 성덕대왕 신종", img: "https://drive.google.com/thumbnail?id=1VeSKaC5oDCPyc0NtVSC5gLT0ISs4t54I&sz=w400", desc: "신라 경덕왕이 아버지 성덕왕을 기리기 위해 만들기 시작한 대형 범종입니다. '에밀레종'으로도 유명하며, 그 웅장한 소리와 아름다운 비천상으로 한국 최고의 범종으로 꼽힙니다." },
+            { name: "가야 금동관", img: "https://drive.google.com/thumbnail?id=1bxtDRknXITGxdECR-lAGCuNOOB797x3E&sz=w400", desc: "가야 지배층이 착용한 금동으로 만든 관입니다. 초화문(풀꽃 무늬) 장식이 특징이며, 가야 각 소국의 왕들이 독자적인 문화를 발전시켰음을 보여주는 유물입니다." },
+            { name: "백제 익산 왕궁리 오층석탑", img: "https://drive.google.com/thumbnail?id=1rcuchHiXaJukQrptsNf_dYcwU6HvMFr7&sz=w400", desc: "전북 익산 왕궁리 유적에 있는 백제 시대의 오층석탑입니다. 백제 석탑 양식을 충실히 따르면서도 단정하고 세련된 아름다움을 보여주는 석탑입니다." },
+            { name: "가야 수레바퀴 모양 토기", img: "https://drive.google.com/thumbnail?id=1nwB695TQprc91-ki0okSh3kB46XrcDA0&sz=w400", desc: "수레바퀴 모양으로 만들어진 가야의 독특한 토기입니다. 실용적인 그릇이자 의례용 기물로 사용되었으며, 가야 토기 문화의 창의성과 다양성을 보여줍니다." },
+            { name: "백제 사택지적비", img: "https://drive.google.com/thumbnail?id=17WEo54AMoZhc0gUVYRfxy-jXQrJ1aY8h&sz=w400", desc: "백제 귀족 사택지적이 세운 비석입니다. 인생의 무상함을 담은 유려한 한문 문장이 새겨져 있어, 백제 귀족의 높은 한문 실력과 불교적 세계관을 보여줍니다." },
+            { name: "신라 임신서기석", img: "https://drive.google.com/thumbnail?id=1gqOYg3y6WggBCawHeinMi-KgZfW3dWUO&sz=w400", desc: "두 화랑이 유교 경전을 공부하고 나라에 충성하겠다는 맹세를 새긴 신라의 돌입니다. 화랑도의 교육 내용과 신라인의 충의 정신을 생생하게 전해줍니다." },
+            { name: "가야 창녕 교동 금귀걸이", img: "https://drive.google.com/thumbnail?id=1xZx-qN9S0ugFNcY4EMWXLLRHv8SE4O48&sz=w400", desc: "경남 창녕 교동 고분군에서 출토된 가야의 금제 귀걸이입니다. 섬세한 금 세공 기술로 만들어졌으며, 가야 지배층의 높은 생활 수준과 장신구 문화를 보여줍니다." },
+            { name: "백제 창왕명 석조사리감", img: "https://drive.google.com/thumbnail?id=1Q5F_5_ILvQchTqEWPqrg5TLcMLXCCwNY&sz=w400", desc: "백제 위덕왕(창왕)이 부여 능산리 절에 봉안한 사리 용기입니다. '백제 창왕'이라는 명문이 새겨져 있어 제작 시기와 주체가 명확하며, 백제 왕실의 불교 신앙을 보여줍니다." },
+            { name: "경주 포석정", img: "https://drive.google.com/thumbnail?id=18iocIijsM3YCFeEHqxL-GgaMecnhMWdX&sz=w400", desc: "경주에 있는 신라의 석조 유적으로, 구불구불한 수로에 술잔을 띄워 시를 짓던 유상곡수연을 즐기던 장소입니다. 신라 귀족 문화의 풍류를 보여주는 유적입니다." },
+            { name: "강서대묘 사신도 현무도", img: "https://drive.google.com/thumbnail?id=1vlONa6Rtb3G2FMWZciYPDVNetHCbwtIb&sz=w400", desc: "평안남도 강서군에 있는 고구려 고분 강서대묘의 벽화입니다. 북쪽을 지키는 신령한 동물 현무(거북과 뱀)를 그린 것으로, 고구려 벽화 예술의 최고 걸작으로 평가받습니다." },
+            { name: "백제 정림사지 오층석탑", img: "https://drive.google.com/thumbnail?id=1_F3lhLApRGdcLtaOGDbMpa-GQnbKNf94&sz=w400", desc: "충남 부여 정림사터에 남아있는 백제의 오층석탑입니다. 날씬하고 세련된 비례가 특징인 백제 석탑의 대표작으로, 나당연합군의 백제 정복 후 소정방이 전공을 새긴 기록이 남아있습니다." },
+            { name: "분황사 모전석탑", img: "https://drive.google.com/thumbnail?id=1b63I3Je1zg_0UEUOhX5I7mOvKtu-4bbs&sz=w400", desc: "경주 분황사에 있는 신라 선덕여왕 때 건립된 석탑입니다. 돌을 벽돌 모양으로 다듬어 쌓은 모전석탑으로, 현존하는 신라 석탑 중 가장 오래된 것입니다." },
+            { name: "백제 서산 용현리 마애여래삼존상", img: "https://drive.google.com/thumbnail?id=16J6tnPSgbpppHuq-Gma6Hv6D8y_CgssU&sz=w400", desc: "충남 서산 가야산 바위에 새겨진 백제의 불상입니다. 온화하고 인자한 미소로 '백제의 미소'라 불리며, 한국 불교 조각사에서 걸작으로 손꼽힙니다." },
+            { name: "단양 신라 적성비", img: "https://drive.google.com/thumbnail?id=1DPhrQLsx7sxPdOpBUP_iHjRh6FnVkrok&sz=w400", desc: "충북 단양에서 발견된 신라의 비석입니다. 진흥왕이 한강 유역을 점령한 후 세운 것으로, 당시 신라의 영토 확장과 지방 통치 방식을 알려주는 중요한 금석문입니다." },
+            { name: "충주 중원 고구려비", img: "https://drive.google.com/thumbnail?id=1C6TMWU6m3KdSNcb-6HFJyQZzAHQJbnDs&sz=w400", desc: "충북 충주에서 발견된 고구려의 비석으로, 한반도 남쪽에서 발견된 유일한 고구려비입니다. 고구려가 한강 유역까지 영토를 확장했음을 증명하는 결정적 유물입니다." }
+        ];
+
+        let characterDeck = [
+            { nation: 'koguryo', name: "소수림왕", desc: "불교 수용과 태학 설립으로 국가 기틀을 마련했습니다." },
+            { nation: 'koguryo', name: "광개토대왕", desc: "고구려 최대 영토를 넓힌 정복 군주입니다." },
+            { nation: 'koguryo', name: "주몽", desc: "활쏘기에 능했던 고구려의 건국 시조입니다." },
+            { nation: 'koguryo', name: "연개소문", desc: "당나라의 침략을 막아낸 강력한 대막리지입니다." },
+            { nation: 'koguryo', name: "장수왕", desc: "평양 천도와 남진 정책으로 전성기를 이끌었습니다." },
+            { nation: 'koguryo', name: "을지문덕", desc: "살수대첩에서 수나라 군대를 대파했습니다." },
+            { nation: 'koguryo', name: "대조영", desc: "고구려를 계승하여 발해를 건국했습니다." },
+            { nation: 'baekje', name: "고이왕", desc: "관등 제도를 정비하여 중앙집권 국가로 발전시켰습니다." },
+            { nation: 'baekje', name: "근초고왕", desc: "요서 지방까지 진출하며 백제의 전성기를 이끌었습니다." },
+            { nation: 'baekje', name: "침류왕", desc: "불교를 공인하여 백제 문화의 기틀을 마련했습니다." },
+            { nation: 'baekje', name: "동성왕", desc: "신라와 혼인 동맹을 맺어 동맹을 강화했습니다." },
+            { nation: 'baekje', name: "성왕", desc: "사비로 도읍을 옮기고 국가 중흥을 꿈꿨습니다." },
+            { nation: 'baekje', name: "무령왕", desc: "22담로에 왕족을 파견하여 지방 통제를 강화했습니다." },
+            { nation: 'baekje', name: "계백", desc: "황산벌에서 5천 결사대로 신라군에 맞서 싸웠습니다." },
+            { nation: 'silla', name: "박혁거세", desc: "알에서 태어난 신라의 건국 시조입니다." },
+            { nation: 'silla', name: "내물왕", desc: "김씨 세습을 확립하여 왕권을 강화했습니다." },
+            { nation: 'silla', name: "지증왕", desc: "국호를 '신라'로 확정하고 우산국을 정벌했습니다." },
+            { nation: 'silla', name: "법흥왕", desc: "불교를 공인하고 병부를 설치했습니다." },
+            { nation: 'silla', name: "진흥왕", desc: "화랑도를 개편하고 한강 유역을 점령했습니다." },
+            { nation: 'silla', name: "김유신", desc: "삼국 통일의 일등 공신인 장군입니다." },
+            { nation: 'silla', name: "김춘추", desc: "나제 동맹을 결성한 태종 무열왕입니다." }
+        ];
+
+        let isRolling = false;
+        let activeBattleData = null;
+
+        function showToast(msg) {
+            const t = document.getElementById('toast-msg');
+            t.innerHTML = msg; t.style.opacity = '1';
+            setTimeout(() => t.style.opacity = '0', 2500);
+        }
+
+
+        // ===== 나라 문장(SVG) =====
+        const EMBLEM = {
+            koguryo: (s) => `<svg viewBox="0 0 48 48" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="22" fill="#1e3a8a" stroke="#d4a437" stroke-width="2.5"/>
+              <circle cx="24" cy="24" r="19" fill="none" stroke="#8fa8ee" stroke-width=".8" stroke-dasharray="1.6 2.2"/>
+              <circle cx="24" cy="24" r="15" fill="#e8442b"/>
+              <circle cx="24" cy="24" r="15" fill="none" stroke="#f7b267" stroke-width="1"/>
+              <g fill="#111" stroke="#111" stroke-linejoin="round" stroke-linecap="round">
+                <path d="M21 24 Q11 22 9 11 Q16 15 22 19Z"/><path d="M27 24 Q37 22 39 11 Q32 15 26 19Z"/>
+                <path d="M19 22 Q13 21 11.5 16 Q16 19 20 20Z" fill="#e8442b" stroke="none" opacity=".0"/>
+                <ellipse cx="24" cy="25" rx="4.6" ry="6.2" stroke="none"/>
+                <circle cx="24" cy="15.8" r="3" stroke="none"/>
+                <path d="M24 12.8 L24 9.6 M22.2 13.4 L20.8 11 M25.8 13.4 L27.2 11" stroke-width="1" fill="none"/>
+                <path d="M26.8 15.5 L30.2 16.4 L26.8 17.3Z" fill="#f0b43c" stroke="none"/>
+                <path d="M21.5 30 L18.5 37 M24 31 L24 38.5 M26.5 30 L29.5 37" stroke-width="1.7" fill="none"/>
+                <path d="M18.5 37 l-2 .6 M24 38.5 l-1.6 1 M24 38.5 l1.6 1 M29.5 37 l2 .6" stroke-width="1.1" fill="none"/>
+              </g></svg>`,
+            baekje: (s) => `<svg viewBox="0 0 48 48" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="24,1.5 44,12.5 44,35.5 24,46.5 4,35.5 4,12.5" fill="#8b1a1a" stroke="#d4a437" stroke-width="2.5" stroke-linejoin="round"/>
+              <polygon points="24,6 40,14.8 40,33.2 24,42 8,33.2 8,14.8" fill="none" stroke="#e7a59a" stroke-width=".8" stroke-dasharray="1.6 2.2"/>
+              <g stroke="#f3e2a6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M24 9 V36" stroke-width="2.6"/>
+                <path d="M24 9 L22.6 12 H25.4Z" fill="#f3e2a6" stroke-width=".6"/>
+                <path d="M24 29 Q17 29 17 22.5 M24 21.5 Q17 21.5 17 15 M24 14 Q18.5 14 18.5 9.8" stroke-width="1.9"/>
+                <path d="M24 25.5 Q31 25.5 31 19 M24 18 Q30 18 30 12.2 M24 33 Q31 33 31 27" stroke-width="1.9"/>
+                <rect x="21.8" y="36" width="4.4" height="3.4" rx=".8" fill="#f3e2a6" stroke="none"/>
+              </g></svg>`,
+            silla: (s) => `<svg viewBox="0 0 48 48" width="${s}" height="${s}" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="24" cy="24" r="22" fill="#14532d" stroke="#d4a437" stroke-width="2.5"/>
+              <g fill="#e8c766">${Array.from({length:16},(_,i)=>{const a=i/16*Math.PI*2;return `<circle cx="${(24+18.2*Math.cos(a)).toFixed(2)}" cy="${(24+18.2*Math.sin(a)).toFixed(2)}" r="1.15"/>`}).join('')}</g>
+              <circle cx="24" cy="24" r="14.3" fill="#1d6b3c" stroke="#e8c766" stroke-width=".8"/>
+              <g stroke="#f1d27a" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.9">
+                <path d="M15 31 V21 M11.5 25 H15 M15 25 H18.5 M11.5 25 V21.5 M18.5 25 V21.5"/>
+                <path d="M24 31 V14.5 M20 21 H28 M20 21 V16.5 M28 21 V16.5"/>
+                <path d="M33 31 V21 M29.5 25 H33 M33 25 H36.5 M29.5 25 V21.5 M36.5 25 V21.5"/>
+              </g>
+              <rect x="12.5" y="30.6" width="23" height="3.4" rx="1" fill="#f1d27a"/>
+              <g fill="#7ee0a8"><circle cx="16" cy="36.6" r="1.1"/><circle cx="20" cy="37" r="1.1"/><circle cx="24" cy="37.3" r="1.2"/><circle cx="28" cy="37" r="1.1"/><circle cx="32" cy="36.6" r="1.1"/></g>
+              <g fill="#f8e7a8"><circle cx="24" cy="13.8" r="1.4"/><circle cx="20" cy="16" r="1.1"/><circle cx="28" cy="16" r="1.1"/></g>
+              </svg>`
+        };
+        function emblemURL(n){ return 'url("data:image/svg+xml,' + encodeURIComponent(EMBLEM[n](96)) + '")'; }
+        function installEmblems(){
+            ['koguryo','baekje','silla'].forEach(n => document.documentElement.style.setProperty('--em-'+n, emblemURL(n)));
+            document.querySelectorAll('[data-emblem]').forEach(el => { el.innerHTML = EMBLEM[el.dataset.emblem](+el.dataset.size || 40); el.style.display='block'; el.style.lineHeight='0'; });
+        }
+        const hanjaMap = {
+            "국내성":"國內城","안시성":"安市城","요동성":"遼東城","평양성":"平壤城","졸본성":"卒本城","압록강":"鴨綠江",
+            "위례성":"慰禮城","웅진성":"熊津城","사비성":"泗沘城","황산벌":"黃山伐","백마강":"白馬江",
+            "경주":"慶州","불국사":"佛國寺","석굴암":"石窟庵","황룡사":"皇龍寺","관산성":"管山城","우산국(독도)":"于山國",
+            "함정":"陷穽","아이템 뽑기":"寶物","인물 뽑기":"人物","대멸망":"大滅亡","한강 유역":"漢江流域"
+        };
+
+        // ===== 칸 장식 아이콘 (선화풍, 무채색) =====
+        const ICONS = (() => {
+            const pagoda = (() => { let s = '<path d="M12 1.8V4.6"/>'; [[7,5.5],[10,10.5],[13,15.5]].forEach(([y,w])=>{ const hw=w/2+1.8; s+=`<path d="M${12-hw} ${y+2.2}Q12 ${y-2.6} ${12+hw} ${y+2.2}"/><path d="M${12-hw+2.4} ${y+2.2}V${y+4.4}M${12+hw-2.4} ${y+2.2}V${y+4.4}"/>`;}); return s + '<path d="M4 21.5H20M6 19.2H18"/>'; })();
+            const waves = (y0) => [0,1,2].map(i => `<path d="M2 ${y0+i*5}q2.5-3 5 0t5 0t5 0t5 0"/>`).join('');
+            return {
+                castle: '<path d="M3 8.6Q8 8.2 12 3.8Q16 8.2 21 8.6"/><path d="M6.2 9.2V12.5M17.8 9.2V12.5"/><path d="M2.6 12.5H21.4V21H2.6Z"/><path d="M9.5 21V17.4Q12 13.8 14.5 17.4V21"/><path d="M2.6 16.8H9.5M14.5 16.8H21.4M6 12.5V16.8M18 12.5V16.8"/>',
+                palace: '<path d="M6 7.8Q10.5 7.4 12 3.4Q13.5 7.4 18 7.8"/><path d="M4.8 8.4H19.2M7.2 8.4V12M16.8 8.4V12"/><path d="M2.6 13Q9 12.6 12 10Q15 12.6 21.4 13"/><path d="M4 13.6V20M8.7 13.6V20M12 13.6V20M15.3 13.6V20M20 13.6V20"/><path d="M2.6 20H21.4M1.6 21.8H22.4"/>',
+                river: waves(7),
+                riverBoat: '<path d="M7 7.5H17L15.4 10.2H8.6Z"/><path d="M12 7.5V2.6L15.6 6.2"/>' + '<path d="M2 14q2.5-3 5 0t5 0t5 0t5 0"/><path d="M2 19q2.5-3 5 0t5 0t5 0t5 0"/>',
+                hangang: '<path d="M2 9.5L6.8 3.8L10.5 9.5M8.6 9.5L13.8 3L19.5 9.5M17 9.5L19.6 6.4L22 9.5"/><path d="M2 14q2.5-3 5 0t5 0t5 0t5 0"/><path d="M2 19q2.5-3 5 0t5 0t5 0t5 0"/>',
+                flame: '<path d="M12 2.5C13.2 7 18.6 9 18.6 14.5A6.6 6.6 0 0 1 5.4 14.5C5.4 11.4 7.6 9.6 8.6 7.2C9.4 9.2 10.4 10 11.2 10C11 7.4 11.4 4.8 12 2.5Z"/><path d="M12 20.6A3.2 3.2 0 0 1 8.8 17.4C8.8 15.2 10.8 14.8 11.4 12.4C12.9 14 15.2 15 15.2 17.4A3.2 3.2 0 0 1 12 20.6Z"/>',
+                gem: '<path d="M6.5 4H17.5L22 10L12 21L2 10Z"/><path d="M2 10H22M9.2 4L7.2 10L12 21L16.8 10L14.8 4"/>',
+                gat: '<ellipse cx="12" cy="14" rx="10" ry="3.4"/><path d="M8.2 13.4V8Q8.2 4.6 12 4.6Q15.8 4.6 15.8 8V13.4"/><path d="M5.4 16Q7 19.6 9.2 20.8M18.6 16Q17 19.6 14.8 20.8"/><path d="M9.5 9.6H14.5"/>',
+                spikes: '<path d="M2.5 20.5H21.5"/><path d="M4 20.5L6.6 9.5L9.2 20.5M9.2 20.5L12 7.5L14.8 20.5M14.8 20.5L17.4 9.5L20 20.5"/><path d="M3 5.5L5 7.5M21 5.5L19 7.5M12 2.4V4.2"/>',
+                pagoda: pagoda,
+                grotto: '<path d="M3.5 21V12.5A8.5 8.5 0 0 1 20.5 12.5V21"/><circle cx="12" cy="10.8" r="2"/><path d="M8.6 21Q8.8 15 12 13.6Q15.2 15 15.4 21"/><path d="M8.5 11A4.4 4.4 0 0 1 15.5 11"/><path d="M2 21H22"/>',
+                island: '<path d="M3 17Q7 7.5 12 10.6Q14.8 5 21 17Z"/><path d="M8.2 13.6Q10.2 12 12 13.6"/><path d="M2 20q2.5-2.6 5 0t5 0t5 0t5 0"/>',
+                battle: '<path d="M4.5 21L19 4.5M19.5 21L5 4.5"/><path d="M15.2 4.2H19.6V8.6M8.8 4.2H4.4V8.6"/><path d="M12 12.8V16.2M10.4 14.5H13.6"/>'
+            };
+        })();
+        const iconKey = {
+            "국내성":"castle","안시성":"castle","요동성":"castle","졸본성":"castle","웅진성":"castle","위례성":"castle","관산성":"castle",
+            "평양성":"palace","사비성":"palace","경주":"palace",
+            "압록강":"river","백마강":"riverBoat","한강 유역":"hangang",
+            "황산벌":"battle","불국사":"pagoda","황룡사":"pagoda","석굴암":"grotto","우산국(독도)":"island",
+            "아이템 뽑기":"gem","인물 뽑기":"gat","함정":"spikes","대멸망":"flame"
+        };
+        function iconHTML(name) {
+            const k = iconKey[name]; if (!k) return '';
+            return `<span class="ico"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${ICONS[k]}</svg></span>`;
+        }
+
+        function cellLabelHTML(i){
+            const name = regions[i];
+            const hj = hanjaMap[name] || '';
+            const isCap = Object.values(capitals).includes(i);
+            const ko = name === "우산국(독도)" ? "우산국(독도)" : name;
+            let seal = '';
+            if (isCap) seal = '<span class="seal">都</span>';
+            else if (name === "한강 유역") seal = '<span class="seal blue">要</span>';
+            const fx = name === "대멸망" ? ' style="text-shadow:0 0 6px #fff,0 0 12px #f97316;"' : '';
+            return `${seal}${iconHTML(name)}<span class="ko-main"${fx}>${ko}</span><span class="hj-sub">${hj}</span>`;
+        }
+
+        function initBoard() {
+            installEmblems();
+            const board = document.getElementById('game-board');
+            board.innerHTML = '';
+            const coords = [];
+            for(let i=1; i<=10; i++) coords.push({r:1, c:i});
+            for(let i=2; i<=6; i++) coords.push({r:i, c:10});
+            for(let i=10; i>=1; i--) coords.push({r:7, c:i});
+            for(let i=6; i>=2; i--) coords.push({r:i, c:1});
+
+            for(let i=0; i<30; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (regions[i] === "아이템 뽑기") cell.classList.add('cell-item');
+                else if (regions[i] === "인물 뽑기") cell.classList.add('cell-character');
+                else if (regions[i] === "함정") cell.classList.add('cell-trap');
+                else if (regions[i] === "대멸망") cell.classList.add('cell-doom');
+                else if (regions[i] === "한강 유역") cell.classList.add('cell-hangang');
+                
+                cell.id = `cell-${i}`;
+                cell.style.gridRow = coords[i].r;
+                cell.style.gridColumn = coords[i].c;
+                const isCapCell = Object.values(capitals).includes(i);
+                const isDoom = regions[i] === "대멸망";
+                const isHangang = regions[i] === "한강 유역";
+                cell.innerHTML = cellLabelHTML(i);
+                board.appendChild(cell);
+            }
+
+            players.forEach((p, i) => {
+                const pElem = document.createElement('div');
+                pElem.className = `player p-${p.nation}`;
+                pElem.id = `player-icon-${i}`;
+                pElem.innerHTML = EMBLEM[p.nation](36) + `<span class="tn">${p.teamNo.replace('팀','')}</span>`;
+                board.appendChild(pElem);
+            });
+
+            requestAnimationFrame(() => {
+                players.forEach((_, i) => updatePlayerPosition(i));
+                applyLandColors();
+                updateTurnUI();
+                updateScores();
+            });
+        }
+
+        function applyLandColors() {
+            for(let i=0; i<30; i++) {
+                const cell = document.getElementById(`cell-${i}`);
+                cell.classList.remove('occupied-koguryo', 'occupied-baekje', 'occupied-silla');
+                if (nationLands.koguryo.includes(i)) cell.classList.add('occupied-koguryo');
+                else if (nationLands.baekje.includes(i)) cell.classList.add('occupied-baekje');
+                else if (nationLands.silla.includes(i)) cell.classList.add('occupied-silla');
+                // 수도 칸 강조 (점령 색 위에도 테두리 표시)
+                if (Object.values(capitals).includes(i)) {
+                    cell.style.boxShadow = '0 0 0 3px #f59e0b, 0 0 10px rgba(245,158,11,0.5)';
+                } else if (i === HANGANG_POS) {
+                    // 한강은 cell-hangang 애니메이션이 처리하므로 boxShadow 초기화
+                    cell.style.boxShadow = '';
+                } else {
+                    cell.style.boxShadow = '';
+                }
+            }
+        }
+
+        function updatePlayerPosition(idx) {
+            const p = players[idx];
+            const cell = document.getElementById(`cell-${p.pos}`);
+            const pIcon = document.getElementById(`player-icon-${idx}`);
+            if (!cell || !pIcon) return;
+            
+            const mates = players.map((q, i) => i).filter(i => players[i].pos === p.pos);
+            const k = mates.indexOf(idx), n = mates.length;
+            const step = Math.min(22, (cell.offsetWidth - 34) / Math.max(1, n - 1));
+            const offsetX = (k - (n - 1) / 2) * step;
+            
+            pIcon.style.top = (cell.offsetTop + cell.offsetHeight - pIcon.offsetHeight - 3) + 'px';
+            pIcon.style.left = (cell.offsetLeft + (cell.offsetWidth / 2) - (pIcon.offsetWidth / 2) + offsetX) + 'px';
+            
+            const nl = pIcon.style.left, nt = pIcon.style.top;
+            if (pIcon._pl !== undefined && (pIcon._pl !== nl || pIcon._pt !== nt) && !pIcon._tr) {
+                pIcon._tr = true; spawnTrail(idx); setTimeout(() => pIcon._tr = false, 380);
+            }
+            pIcon._pl = nl; pIcon._pt = nt;
+            if (idx === turnOrder[turnIndex]) pIcon.classList.add('active-player');
+            else pIcon.classList.remove('active-player');
+        }
+
+        const DICE_ROT = { 1:[0,0], 2:[0,-90], 3:[-90,0], 4:[90,0], 5:[0,90], 6:[0,180] };
+        const DICE_HANJA = ['一','二','三','四','五','六'];
+        function rollDice() {
+            if (isRolling) return;
+            isRolling = true;
+            const cube = document.getElementById('dice-cube');
+            const stage = document.getElementById('dice-stage');
+            const res = document.getElementById('dice-result');
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const [rx, ry] = DICE_ROT[roll];
+            cube.style.setProperty('--rx', rx + 'deg'); cube.style.setProperty('--ry', ry + 'deg');
+            res.innerText = '…';
+            cube.classList.remove('tumble'); void cube.offsetWidth; cube.classList.add('tumble');
+            setTimeout(() => {
+                cube.classList.remove('tumble');
+                cube.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+                stage.classList.remove('land'); void stage.offsetWidth; stage.classList.add('land');
+                res.innerText = DICE_HANJA[roll - 1] + ' ' + roll;
+                movePlayer(turnOrder[turnIndex], roll);
+                isRolling = false;
+            }, 920);
+        }
+
+        const TRAIL_COL = { koguryo: '#6f93ff', baekje: '#ff6e5e', silla: '#58dc8c' };
+        function spawnTrail(idx) {
+            const icon = document.getElementById(`player-icon-${idx}`);
+            const board = document.getElementById('game-board');
+            const col = TRAIL_COL[players[idx].nation];
+            let ticks = 0;
+            const iv = setInterval(() => {
+                const x = icon.offsetLeft + icon.offsetWidth / 2, y = icon.offsetTop + icon.offsetHeight / 2;
+                const d = document.createElement('div');
+                d.className = 'trail-dot'; d.style.left = x + 'px'; d.style.top = y + 'px'; d.style.setProperty('--tc', col);
+                d.addEventListener('animationend', () => d.remove());
+                board.appendChild(d);
+                if (ticks % 2 === 0) {
+                    const s = document.createElement('div');
+                    s.className = 'trail-spark'; s.style.left = (x + (Math.random() - .5) * 14) + 'px'; s.style.top = (y + (Math.random() - .5) * 14) + 'px';
+                    s.style.setProperty('--dx', ((Math.random() - .5) * 36) + 'px'); s.style.setProperty('--dy', (-10 - Math.random() * 26) + 'px');
+                    s.addEventListener('animationend', () => s.remove());
+                    board.appendChild(s);
+                }
+                if (++ticks > 14) clearInterval(iv);
+            }, 36);
+        }
+
+        async function movePlayer(idx, steps) {
+            for(let i=0; i<steps; i++) {
+                players[idx].pos = (players[idx].pos + 1) % 30;
+                updatePlayerPosition(idx);
+                await new Promise(r => setTimeout(r, 150));
+            }
+            players.forEach((_, i) => updatePlayerPosition(i));
+            setTimeout(() => checkCell(idx), 300);
+        }
+
+        // 수도 칸 인덱스 (평양성=4, 사비성=12, 경주=20)
+        const capitals = { koguryo: 4, baekje: 12, silla: 20 };
+        // 수도 소유자 역방향 맵
+        const capitalOwner = { 4: 'koguryo', 12: 'baekje', 20: 'silla' };
+        const HANGANG_POS = 19;
+        let hangangOwner = null; // 한강 유역 최초 점령 여부 및 소유자
+
+        function checkCell(idx) {
+            const pos = players[idx].pos;
+            const nation = players[idx].nation;
+            
+            if (regions[pos] === "아이템 뽑기") { 
+                showItemModal(); 
+                return; 
+            }
+            if (regions[pos] === "인물 뽑기") {
+                if (characterDeck.length === 0) {
+                    scores[nation] += 30;
+                    showToast("위인들이 모두 기록되었습니다! 국가 보조금 지급. (+30점)");
+                    updateScores(); nextTurn();
+                } else { showCharModal(); }
+                return; 
+            }
+            if (regions[pos] === "함정") { handleTrap(nation); return; }
+            if (regions[pos] === "대멸망") { handleDoom(); return; }
+
+            // 한강 유역 처리
+            if (pos === HANGANG_POS) {
+                if (hangangOwner === null) {
+                    // 최초 점령: 무조건 점수 +150, 특별 팝업
+                    hangangOwner = nation;
+                    nationLands[nation].push(pos);
+                    applyLandColors();
+                    scores[nation] += 150;
+                    updateScores();
+                    showHangangClaim(nation);
+                } else if (hangangOwner === nation) {
+                    // 내 땅: 보급품
+                    scores[nation] += 20;
+                    showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+20점)");
+                    updateScores();
+                } else {
+                    // 다른 나라 점령지: 무조건 전투 (50:50)
+                    showBattleModal(idx, null, pos, false, true);
+                }
+                return;
+            }
+
+            // 수도 점령전: 다른 나라 수도에 착지 시 무조건 전투
+            const capOwner = capitalOwner[pos];
+            if (capOwner && capOwner !== nation) {
+                showBattleModal(idx, null, pos, true);
+                return;
+            }
+
+            if (nationLands[nation].includes(pos)) { 
+                scores[nation] += 20;
+                showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+20점)");
+                updateScores(); return; 
+            }
+
+            let ownerNation = null;
+            for (let n in nationLands) { if (nationLands[n].includes(pos)) { ownerNation = n; break; } }
+
+            if (ownerNation) {
+                const defenders = players.filter(p => p.nation === ownerNation && p.pos === pos && p.id !== players[idx].id);
+                if (defenders.length > 0) showBattleModal(idx, defenders[0], pos, false);
+                else showQuiz(idx, pos, ownerNation);
+            } else { showQuiz(idx, pos, null); }
+        }
+
+        const RARE_NAMES = ["칠지도","백제금동대향로","광개토대왕릉비","신라 금관","천마도","신라 성덕대왕 신종","무령왕릉 금제 관장식","가야 금동관"];
+        const RARE_RATE = 0.2;
+        artifacts.forEach(a => a.rare = RARE_NAMES.includes(a.name));
+
+        // ===== 파티클 엔진 =====
+        const fx = { cv: null, ctx: null, ps: [], run: false, last: 0, emit: [] };
+        function fxStart() {
+            if (!fx.cv) { fx.cv = document.getElementById('fx-canvas'); fx.ctx = fx.cv.getContext('2d'); }
+            fx.cv.width = window.innerWidth; fx.cv.height = window.innerHeight; fx.cv.style.display = 'block';
+            if (!fx.run) { fx.run = true; fx.last = performance.now(); requestAnimationFrame(fxLoop); }
+        }
+        const PAL_N = ['#fff4c2', '#ffd75e', '#ffffff', '#ffe9a0'];
+        const PAL_R = ['#fff4c2', '#ffd75e', '#ffffff', '#ff7ad9', '#7ae8ff', '#b38cff'];
+        const rnd = (a, b) => a + Math.random() * (b - a);
+        function fxBurst(x, y, n, rare, speed) {
+            const pal = rare ? PAL_R : PAL_N;
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * Math.PI * 2, s = speed * rnd(.25, 1);
+                fx.ps.push({ t: Math.random() < .6 ? 'star' : 'dot', x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 40, g: 160, drag: 1.6,
+                    life: rnd(.6, 1.5), max: 1.5, size: rnd(3, rare ? 11 : 8), col: pal[(Math.random() * pal.length) | 0], rot: rnd(0, 6), vr: rnd(-4, 4) });
+            }
+        }
+        function fxConfetti(n) {
+            const cols = ['#ffd75e', '#ff7ad9', '#7ae8ff', '#b38cff', '#fff4c2', '#ff6b5e'];
+            for (let i = 0; i < n; i++) fx.ps.push({ t: 'conf', x: rnd(0, fx.cv.width), y: rnd(-200, -10), vx: rnd(-40, 40), vy: rnd(140, 300), g: 30, drag: .2,
+                life: rnd(2.2, 3.6), max: 3.6, size: rnd(6, 12), col: cols[(Math.random() * cols.length) | 0], rot: rnd(0, 6), vr: rnd(-8, 8), sw: rnd(0, 6) });
+        }
+        function fxPlay(kind, o) { fx.emit.push(Object.assign({ kind, left: o.dur }, o)); }
+        function fxStopAmbient() { fx.emit = fx.emit.filter(e => e.kind !== 'ambient'); }
+        function fxStar(c, x, y, r, rot) {
+            c.save(); c.translate(x, y); c.rotate(rot); c.beginPath();
+            for (let i = 0; i < 8; i++) { const rr = i % 2 ? r * .22 : r; const a = i * Math.PI / 4; c.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+            c.closePath(); c.fill(); c.restore();
+        }
+        function fxLoop(now) {
+            const c = fx.ctx, dt = Math.min(.05, (now - fx.last) / 1000); fx.last = now;
+            // emitters
+            fx.emit.forEach(e => {
+                e.left -= dt; e.acc = (e.acc || 0) + e.rate * dt;
+                while (e.acc >= 1) {
+                    e.acc -= 1;
+                    if (e.kind === 'charge') {
+                        const a = Math.random() * Math.PI * 2, r = rnd(120, 300);
+                        const px = e.x + Math.cos(a) * r, py = e.y + Math.sin(a) * r;
+                        fx.ps.push({ t: 'pull', x: px, y: py, tx: e.x, ty: e.y, life: rnd(.5, .9), max: .9, size: rnd(2.5, e.rare ? 8 : 6), col: (e.rare ? PAL_R : PAL_N)[(Math.random() * (e.rare ? 6 : 4)) | 0], rot: 0, vr: 3 });
+                    } else if (e.kind === 'ambient') {
+                        const rc = e.el.getBoundingClientRect();
+                        const px = rnd(rc.left - 30, rc.right + 30), py = rnd(rc.top - 30, rc.bottom + 30);
+                        fx.ps.push({ t: 'star', x: px, y: py, vx: rnd(-10, 10), vy: rnd(-40, -10), g: 0, drag: .3, life: rnd(.7, 1.4), max: 1.4, size: rnd(3, 10), col: PAL_R[(Math.random() * 6) | 0], rot: rnd(0, 6), vr: rnd(-3, 3) });
+                    }
+                }
+            });
+            fx.emit = fx.emit.filter(e => e.kind === 'ambient' || e.left > 0);
+            c.clearRect(0, 0, fx.cv.width, fx.cv.height);
+            fx.ps = fx.ps.filter(p => (p.life -= dt) > 0);
+            fx.ps.forEach(p => {
+                const k = Math.max(0, p.life / p.max);
+                if (p.t === 'pull') { p.x += (p.tx - p.x) * Math.min(1, dt * 5); p.y += (p.ty - p.y) * Math.min(1, dt * 5); }
+                else { p.vx -= p.vx * p.drag * dt; p.vy += p.g * dt - p.vy * p.drag * dt; p.x += p.vx * dt; p.y += p.vy * dt; if (p.t === 'conf') p.x += Math.sin((p.sw += dt * 5)) * 1.2; }
+                p.rot += p.vr * dt;
+                if (p.t === 'conf') {
+                    c.globalCompositeOperation = 'source-over'; c.globalAlpha = Math.min(1, k * 2); c.fillStyle = p.col;
+                    c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(1, Math.abs(Math.sin(p.rot * 1.5)) * .9 + .1); c.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * .66); c.restore();
+                    return;
+                }
+                c.globalCompositeOperation = 'lighter';
+                const a = p.t === 'pull' ? 1 - k * .3 : k;
+                const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.6);
+                g.addColorStop(0, p.col); g.addColorStop(1, 'rgba(255,200,80,0)');
+                c.globalAlpha = a * .55; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.size * 2.6, 0, 7); c.fill();
+                c.globalAlpha = a; c.fillStyle = p.col;
+                if (p.t === 'dot' || p.t === 'pull') { c.beginPath(); c.arc(p.x, p.y, p.size * .55 * (p.t === 'pull' ? k + .4 : k + .3), 0, 7); c.fill(); }
+                else fxStar(c, p.x, p.y, p.size * (.5 + k * .7), p.rot);
+            });
+            c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+            if (fx.ps.length === 0 && fx.emit.length === 0) { fx.run = false; fx.cv.style.display = 'none'; return; }
+            requestAnimationFrame(fxLoop);
+        }
+        function fxFlash(x, y, rare) {
+            const f = document.getElementById('fx-flash');
+            f.style.setProperty('--fx', x + 'px ' + y + 'px');
+            f.classList.remove('go', 'go-rare'); void f.offsetWidth; f.classList.add(rare ? 'go-rare' : 'go');
+        }
+
+        function showItemModal() {
+            document.getElementById('item-box-closed').className = '';
+            document.getElementById('item-modal').style.display = 'flex';
+        }
+
+        function drawArtifact() {
+            const btn = document.getElementById('draw-item-btn');
+            const box = document.getElementById('item-box-closed');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            const rare = (window.__forceRare !== undefined) ? window.__forceRare : Math.random() < RARE_RATE;
+            let pool = artifacts.filter(a => a.rare === rare); if (!pool.length) pool = artifacts;
+            const item = pool[Math.floor(Math.random() * pool.length)];
+            const r = box.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height * .55;
+            const charge = rare ? 1700 : 1100;
+
+            box.className = 'shaking' + (rare ? ' charge-rare' : '');
+            fxStart();
+            fxPlay('charge', { x: cx, y: cy, dur: charge / 1000, rate: rare ? 120 : 60, rare });
+
+            setTimeout(() => {
+                box.className = 'open';
+                fxFlash(cx, cy, rare);
+                fxBurst(cx, cy - 10, rare ? 90 : 45, rare, rare ? 520 : 380);
+                if (rare) setTimeout(() => fxBurst(cx, cy - 10, 60, true, 700), 180);
+            }, charge);
+
+            setTimeout(() => {
+                const currentNation = players[turnOrder[turnIndex]].nation;
+                scores[currentNation] += 30;
+                updateScores();
+                document.getElementById('item-modal').style.display = 'none';
+                showItemResult(item, rare);
+                box.className = '';
+                btn.disabled = false;
+            }, charge + 650);
+        }
+
+        function showItemResult(item, rare) {
+            document.getElementById('item-name').innerText = item.name;
+            const img = document.getElementById('item-img');
+            img.style.backgroundImage = `url('${item.img}')`;
+            document.getElementById('item-nat-badge').style.display = 'none';
+            document.getElementById('item-desc').innerText = item.desc;
+            const modal = document.getElementById('item-result-modal');
+            const card = document.getElementById('item-result-card');
+            modal.classList.remove('is-rare', 'is-common'); modal.classList.add(rare ? 'is-rare' : 'is-common');
+            const tag = document.getElementById('item-rarity');
+            tag.innerText = rare ? '★ 稀貴 · 레어 유물 ★' : '一般 · 일반 유물';
+            card.classList.remove('card-spin', 'pop', 'rare-card'); void card.offsetWidth;
+            card.classList.add(rare ? 'rare-card' : 'pop');
+            modal.style.display = 'flex';
+            const rc = card.getBoundingClientRect(), x = rc.left + rc.width / 2, y = rc.top + rc.height / 2;
+            fxStart();
+            if (rare) {
+                fxFlash(x, y, true);
+                fxBurst(x, y, 110, true, 760);
+                setTimeout(() => fxBurst(x, y, 70, true, 620), 260);
+                setTimeout(() => fxBurst(x, y, 50, true, 520), 600);
+                fxConfetti(110);
+                setTimeout(() => fxConfetti(70), 900);
+                fxPlay('ambient', { el: card, dur: 9999, rate: 55 });
+            } else {
+                fxBurst(x, y, 36, false, 380);
+                setTimeout(() => fxBurst(x, y - 60, 20, false, 260), 300);
+            }
+        }
+
+        function closeItemResult() {
+            fxStopAmbient();
+            document.getElementById('item-result-modal').style.display = 'none';
+            nextTurn();
+        }
+
+        function handleTrap(nation) {
+            const traps = [
+                { name: "농민 반란", msg: "농민 반란 발생!", score: -200 },
+                { name: "흉년 발생", msg: "흉년으로 식량난 발생!", score: -150 },
+                { name: "대홍수 발생", msg: "대홍수 발생!", score: -150 },
+                { name: "전염병 발생", msg: "전염병 창궐!", score: -250 }
+            ];
+            const selected = traps[Math.floor(Math.random() * traps.length)];
+            scores[nation] += selected.score;
+            updateScores();
+
+            const modal = document.getElementById('trap-modal');
+            const title = document.getElementById('trap-title');
+            const content = document.getElementById('trap-content');
+            
+            title.innerText = `[${selected.name}] 발생!`;
+            content.innerHTML = `<span class="text-blue-600">${nationNamesKo[nation]}</span>에 큰 시련이 닥쳤습니다.<br><br><span class="text-2xl text-red-600">${selected.msg}</span><br><br><span class="text-red-500">(${selected.score}점)</span>`;
+            
+            modal.style.display = 'flex';
+        }
+
+        function handleDoom() {
+            // 모든 영토 초기화
+            nationLands.koguryo = [];
+            nationLands.baekje = [];
+            nationLands.silla = [];
+            // 모든 점수 -300
+            scores.koguryo -= 300;
+            scores.baekje -= 300;
+            scores.silla -= 300;
+            applyLandColors();
+            updateScores();
+            document.getElementById('doom-modal').style.display = 'flex';
+        }
+
+        function closeDoomModal() {
+            document.getElementById('doom-modal').style.display = 'none';
+            nextTurn();
+        }
+
+        function closeTrapModal() {
+            document.getElementById('trap-modal').style.display = 'none';
+            nextTurn();
+        }
+
+        function showCharModal() {
+            document.getElementById('modal-remaining').innerText = characterDeck.length;
+            document.getElementById('char-modal').style.display = 'flex';
+        }
+
+        function drawCharacter() {
+            const btn = document.getElementById('draw-char-btn');
+            const cardBack = document.getElementById('char-card-back');
+            btn.disabled = true;
+            cardBack.style.animation = "rolling 0.2s infinite";
+            setTimeout(() => {
+                cardBack.style.animation = "";
+                const randomIndex = Math.floor(Math.random() * characterDeck.length);
+                const char = characterDeck.splice(randomIndex, 1)[0];
+                document.getElementById('remaining-cards').innerText = characterDeck.length;
+                const currentDrawerNation = players[turnOrder[turnIndex]].nation;
+                scores[char.nation] += 50; scores[currentDrawerNation] += 20; nationCards[char.nation] += 1; 
+                updateScores(); document.getElementById('char-modal').style.display = 'none';
+                showCharResult(char); btn.disabled = false;
+            }, 1200);
+        }
+
+        function showCharResult(char) {
+            const modal = document.getElementById('char-result-modal');
+            const card = document.getElementById('char-result-card');
+            const badge = document.getElementById('char-nation-badge');
+            const colors = { koguryo: 'border-blue-600', baekje: 'border-red-600', silla: 'border-green-600' };
+            const bgColors = { koguryo: 'bg-blue-600', baekje: 'bg-red-600', silla: 'bg-green-600' };
+            card.className = `bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-8 ${colors[char.nation]} text-center card-spin`;
+            badge.className = `inline-block px-6 py-2 rounded-full text-white font-black mb-2 ${bgColors[char.nation]}`;
+            badge.innerText = nationNamesKo[char.nation];
+            document.getElementById('char-name').innerText = char.name;
+            document.getElementById('char-points-msg').innerText = `${nationNamesKo[char.nation]} +50점 획득!`;
+            document.getElementById('char-desc').innerText = char.desc;
+            modal.style.display = 'flex';
+        }
+
+        function closeCharResult() { document.getElementById('char-result-modal').style.display = 'none'; nextTurn(); }
+
+        let activeQuizData = null;
+
+        function showQuiz(pIdx, pos, ownerNation) {
+            activeQuizData = { pIdx, pos, ownerNation };
+
+            // 70% 확률로 퀴즈, 30% 확률로 가위바위보
+            if (Math.random() < 0.7) {
+                // 퀴즈 모달
+                document.getElementById('quiz-mode').innerText = ownerNation ? "빈집 털기 도전!" : "영토 점령 퀴즈";
+                document.getElementById('quiz-region').innerText = regions[pos];
+                document.getElementById('quiz-correct-btn').onclick = () => {
+                    document.getElementById('quiz-modal').style.display = 'none';
+                    occupyLand(pIdx, pos, ownerNation);
+                };
+                document.getElementById('quiz-wrong-btn').onclick = () => {
+                    document.getElementById('quiz-modal').style.display = 'none';
+                    document.getElementById('nation-pick-modal').style.display = 'flex';
+                };
+                document.getElementById('quiz-modal').style.display = 'flex';
+            } else {
+                // 가위바위보 모달
+                document.getElementById('rps-region').innerText = regions[pos];
+                document.getElementById('rps-modal').style.display = 'flex';
+            }
+        }
+
+        function rpsResult(win) {
+            document.getElementById('rps-modal').style.display = 'none';
+            const { pIdx, pos, ownerNation } = activeQuizData;
+            if (win) {
+                occupyLand(pIdx, pos, ownerNation);
+            } else {
+                showBattleResultPopup("가위바위보에서 졌습니다!", "영토 점령 실패...");
+            }
+            activeQuizData = null;
+        }
+
+        function giveTerritory(winnerNation) {
+            document.getElementById('nation-pick-modal').style.display = 'none';
+            const { pos, ownerNation } = activeQuizData;
+
+            // Find a representative player index for the winning nation
+            const winnerPlayer = players.find(p => p.nation === winnerNation);
+            if (!winnerPlayer) { nextTurn(); return; }
+
+            occupyLand(winnerPlayer.id, pos, ownerNation);
+            activeQuizData = null;
+        }
+
+        function occupyLand(pIdx, pos, ownerNation) {
+            const myNation = players[pIdx].nation;
+            let statusMsg = "";
+            let scoreDetail = "";
+
+            if (ownerNation && ownerNation !== myNation) {
+                scores[myNation] += 50; 
+                scores[ownerNation] -= 30;
+                statusMsg = "빈집털이에 성공했습니다!";
+                scoreDetail = `(뺏은 국가 ${nationNamesKo[myNation]} +50점, 뺏긴 국가 ${nationNamesKo[ownerNation]} -30점)`;
+            } else {
+                scores[myNation] += 40;
+                statusMsg = "새로운 영토 점령!";
+                scoreDetail = "(+40점)";
+            }
+            
+            for (let n in nationLands) {
+                const idx = nationLands[n].indexOf(pos);
+                if (idx > -1) nationLands[n].splice(idx, 1);
+            }
+            nationLands[myNation].push(pos);
+            applyLandColors();
+            updateScores();
+            showBattleResultPopup(statusMsg, scoreDetail);
+        }
+
+        function showBattleModal(aIdx, def, pos, isCapital, isHangang = false) {
+            activeBattleData = { aIdx, def, pos, isCapital, isHangang };
+            const att = players[aIdx];
+            const defNation = isCapital ? capitalOwner[pos] : isHangang ? hangangOwner : def.nation;
+
+            document.getElementById('attacker-char-box').innerText = nationChars[att.nation];
+            document.getElementById('attacker-char-box').className = `w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-2 p-${att.nation}`;
+            document.getElementById('defender-char-box').innerText = nationChars[defNation];
+            document.getElementById('defender-char-box').className = `w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-2 p-${defNation}`;
+
+            if (isCapital) {
+                document.getElementById('battle-modal-title').innerHTML = '🏯 수도 점령전! 🏯';
+                document.getElementById('battle-modal-subtitle').innerHTML = `<span class="text-amber-600 font-black">${nationNamesKo[defNation]}의 수도</span>를 노리는 전투입니다!`;
+                document.getElementById('battle-modal-inner').className = 'bg-white p-5 rounded-3xl max-w-2xl w-full mx-4 shadow-2xl border-4 border-amber-500 text-center';
+                document.getElementById('attacker-prob-label').innerText = `공격 승리 30%`;
+                document.getElementById('defender-prob-label').innerText = `수비 성공 70%`;
+                document.getElementById('attacker-prob-bar').style.width = '30%';
+                document.getElementById('defender-prob-bar').style.width = '70%';
+                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +100점 / 수비 성공 시 +20점';
+            } else if (isHangang) {
+                document.getElementById('battle-modal-title').innerHTML = '🌊 한강 유역 쟁탈전! 🌊';
+                document.getElementById('battle-modal-subtitle').innerHTML = `<span class="text-blue-600 font-black">한반도의 요충지</span>를 두고 전투가 벌어집니다!`;
+                document.getElementById('battle-modal-inner').className = 'bg-white p-5 rounded-3xl max-w-2xl w-full mx-4 shadow-2xl border-4 border-blue-500 text-center';
+                document.getElementById('attacker-prob-label').innerText = `공격 승리 50%`;
+                document.getElementById('defender-prob-label').innerText = `수비 성공 50%`;
+                document.getElementById('attacker-prob-bar').style.width = '50%';
+                document.getElementById('defender-prob-bar').style.width = '50%';
+                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +200점 / 수비 실패 시 -200점';
+            } else {
+                document.getElementById('battle-modal-title').innerHTML = '⚔️ 전투 발생! ⚔️';
+                document.getElementById('battle-modal-subtitle').innerHTML = '';
+                document.getElementById('battle-modal-inner').className = 'bg-white p-5 rounded-3xl max-w-2xl w-full mx-4 shadow-2xl border-4 border-slate-800 text-center';
+                document.getElementById('attacker-prob-label').innerText = `공격 승리 50%`;
+                document.getElementById('defender-prob-label').innerText = `수비 성공 50%`;
+                document.getElementById('attacker-prob-bar').style.width = '50%';
+                document.getElementById('defender-prob-bar').style.width = '50%';
+                document.getElementById('battle-score-desc').innerText = '* 공격 승리 시 +70점 / 수비 승리 시 +40점';
+            }
+
+            const sbtn = document.getElementById('start-battle-btn');
+            sbtn.disabled = false; sbtn.innerText = '⚔️ 전투 시작!';
+            document.getElementById('battle-modal').style.display = 'flex';
+            initBattleScene(att.nation, defNation);
+        }
+
+        // ===== BATTLE SCENE START =====
+        // ================= 전투 장면 (Canvas 연출) =================
+        const NATION_STYLE = {
+            koguryo: { name: '고구려', char: '高', main: '#2563eb', dark: '#1e3a8a', light: '#bfdbfe', horse: '#26262e', horseDark: '#16161b', armored: true,  cav: 8, inf: 6 },
+            baekje:  { name: '백제',   char: '百', main: '#dc2626', dark: '#7f1d1d', light: '#fecaca', horse: '#6e4727', horseDark: '#4a2e17', armored: false, cav: 5, inf: 9 },
+            silla:   { name: '신라',   char: '新', main: '#16a34a', dark: '#14532d', light: '#bbf7d0', horse: '#e8e2d2', horseDark: '#b9b09a', armored: false, cav: 4, inf: 10 }
+        };
+        const BATTLE_T = { clash: 1900, resolve: 3200, end: 4700 };
+        const BS = { canvas: null, ctx: null, raf: null, W: 720, H: 320, bg: null, units: [], particles: [], arrows: [], S: null, wt: 0 };
+
+        function bsRnd(a, b) { return a + Math.random() * (b - a); }
+        function bsClamp(x) { return Math.max(0, Math.min(1, x)); }
+        function bsEaseInOut(x) { x = bsClamp(x); return x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; }
+        function bsEaseOut(x) { x = bsClamp(x); return 1 - (1 - x) * (1 - x); }
+        function bsRound(c, x, y, w, h, r) {
+            c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+            c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+        }
+
+        // ---------- 배경 (한 번만 그려서 캐시) ----------
+        function bsBuildBg() {
+            const W = BS.W, H = BS.H;
+            const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+            const c = cv.getContext('2d');
+            const g = c.createLinearGradient(0, 0, 0, 215);
+            g.addColorStop(0, '#2e2347'); g.addColorStop(0.45, '#9a4b45'); g.addColorStop(0.8, '#f0a869'); g.addColorStop(1, '#ffd9a0');
+            c.fillStyle = g; c.fillRect(0, 0, W, H);
+            const sg = c.createRadialGradient(360, 205, 5, 360, 205, 170);
+            sg.addColorStop(0, 'rgba(255,244,205,0.95)'); sg.addColorStop(0.3, 'rgba(255,205,125,0.45)'); sg.addColorStop(1, 'rgba(255,205,125,0)');
+            c.fillStyle = sg; c.fillRect(0, 30, W, 200);
+            c.fillStyle = 'rgba(255,225,195,0.16)';
+            [[90, 60, 120, 9], [250, 85, 160, 8], [520, 55, 150, 9], [640, 100, 110, 7], [400, 40, 100, 6]].forEach(([x, y, w, h]) => {
+                c.beginPath(); c.ellipse(x, y, w, h, 0, 0, Math.PI * 2); c.fill();
+            });
+            const poly = (pts, fill) => {
+                c.fillStyle = fill; c.beginPath(); c.moveTo(pts[0], pts[1]);
+                for (let i = 2; i < pts.length; i += 2) c.lineTo(pts[i], pts[i + 1]);
+                c.closePath(); c.fill();
+            };
+            poly([0, 218, 0, 178, 60, 168, 130, 198, 210, 150, 300, 205, 380, 168, 470, 202, 560, 150, 650, 196, 720, 172, 720, 218], '#6a4560');
+            poly([0, 220, 0, 200, 90, 186, 170, 212, 260, 186, 360, 214, 450, 190, 540, 214, 640, 188, 720, 208, 720, 220], '#3d2a42');
+            const gg = c.createLinearGradient(0, 212, 0, H);
+            gg.addColorStop(0, '#85733f'); gg.addColorStop(0.5, '#5e4e2a'); gg.addColorStop(1, '#3e3320');
+            c.fillStyle = gg; c.fillRect(0, 214, W, H - 214);
+            // 지면 질감
+            for (let i = 0; i < 160; i++) {
+                const x = (Math.sin(i * 12.9898) * 43758.5453 % 1 + 1) % 1 * W;
+                const y = 222 + ((Math.sin(i * 78.233) * 12345.678 % 1 + 1) % 1) * (H - 226);
+                c.fillStyle = (i % 3 === 0) ? 'rgba(30,22,10,0.22)' : 'rgba(150,130,70,0.18)';
+                c.fillRect(x, y, 5 + (i % 5) * 3, 1.5);
+            }
+            // 비네트
+            const vg = c.createRadialGradient(W / 2, H / 2, H * 0.45, W / 2, H / 2, W * 0.62);
+            vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(10,5,15,0.55)');
+            c.fillStyle = vg; c.fillRect(0, 0, W, H);
+            return cv;
+        }
+
+        // ---------- 군대 편성 ----------
+        function bsBuildArmy(nation, side) {
+            const st = NATION_STYLE[nation];
+            const W = BS.W, dir = side === 'L' ? 1 : -1;
+            const lanes = [238, 254, 270, 286], scales = [0.9, 0.97, 1.04, 1.11];
+            const total = st.cav + st.inf, arr = [];
+            for (let i = 0; i < total; i++) {
+                const lane = i % 4, rank = Math.floor(i / 4);
+                const type = i < st.cav ? 'cav' : 'inf';
+                const startX = side === 'L' ? 132 - rank * 34 - bsRnd(0, 12) : W - 132 + rank * 34 + bsRnd(0, 12);
+                const endX = 360 - dir * (14 + rank * 30 + bsRnd(0, 8));
+                arr.push({
+                    side, dir, nation, type, y: lanes[lane] + bsRnd(-5, 5),
+                    sc: scales[lane] * (type === 'cav' ? 0.82 : 1),
+                    startX, endX,
+                    s0: type === 'cav' ? 450 + bsRnd(0, 160) : 650 + bsRnd(0, 200),
+                    e0: type === 'cav' ? 1850 + bsRnd(-80, 60) : 2150 + bsRnd(-80, 120),
+                    seed: bsRnd(0, 6.28), fallAt: null
+                });
+            }
+            return arr;
+        }
+
+        // ---------- 장면 시작/종료 ----------
+        function initBattleScene(attN, defN) {
+            BS.canvas = document.getElementById('battle-canvas');
+            BS.ctx = BS.canvas.getContext('2d');
+            if (!BS.bg) BS.bg = bsBuildBg();
+            BS.units = bsBuildArmy(attN, 'L').concat(bsBuildArmy(defN, 'R')).sort((a, b) => a.y - b.y);
+            BS.particles = []; BS.arrows = [];
+            BS.S = { running: false, t0: 0, last: 0, attN, defN, attWins: true, fired: {}, nextArrow: 250, onDone: null, duration: BATTLE_T.end };
+            // 확률 바를 국가 색으로
+            const a = NATION_STYLE[attN], d = NATION_STYLE[defN];
+            document.getElementById('attacker-prob-bar').style.backgroundColor = a.main;
+            document.getElementById('defender-prob-bar').style.backgroundColor = d.main;
+            document.getElementById('attacker-prob-label').style.color = a.main;
+            document.getElementById('defender-prob-label').style.color = d.main;
+            cancelAnimationFrame(BS.raf);
+            BS.raf = requestAnimationFrame(bsLoop);
+        }
+
+        function startBattleScene(attWins, onDone) {
+            const S = BS.S;
+            S.attWins = attWins; S.onDone = onDone; S.fired = {}; S.nextArrow = 250; S.last = 0;
+            BS.units.forEach(u => {
+                const winnerSide = (u.side === 'L') === attWins;
+                const chance = winnerSide ? 0.18 : 0.55;
+                u.fallAt = Math.random() < chance ? bsRnd(2350, 3150) : null;
+            });
+            S.t0 = performance.now();
+            S.running = true;
+        }
+
+        function stopBattleScene() {
+            cancelAnimationFrame(BS.raf);
+            BS.raf = null; BS.S = null; BS.particles = []; BS.arrows = [];
+        }
+
+        function bsLoop(now) {
+            const S = BS.S; if (!S) return;
+            const dt = Math.min(40, S.last ? now - S.last : 16); S.last = now;
+            const t = S.running ? now - S.t0 : 0;
+            bsRender(t, dt, now);
+            if (S.running && t >= S.duration) {
+                S.running = false;
+                const cb = S.onDone; S.onDone = null;
+                if (cb) cb();
+                return;
+            }
+            BS.raf = requestAnimationFrame(bsLoop);
+        }
+
+        // ---------- 병사 그리기 ----------
+        function bsInf(c, st, phase, amp, aimUp, atk, noSpear) {
+            const sw = Math.sin(phase) * 7 * amp;
+            c.lineCap = 'round'; c.lineJoin = 'round';
+            c.strokeStyle = '#241a12'; c.lineWidth = 4.2;
+            c.beginPath(); c.moveTo(-1, -17); c.lineTo(-1 + sw, -1); c.stroke();
+            c.beginPath(); c.moveTo(2, -17); c.lineTo(2 - sw, -1); c.stroke();
+            if (!noSpear) {
+                c.save(); c.translate(4, -27);
+                c.rotate(aimUp ? -1.3 : -0.06 - atk * 0.08);
+                const ext = aimUp ? 0 : Math.max(0, atk) * 10;
+                c.strokeStyle = '#6b4a2a'; c.lineWidth = 2.2;
+                c.beginPath(); c.moveTo(-14, 0); c.lineTo(38 + ext, 0); c.stroke();
+                c.fillStyle = '#e5e7eb'; c.beginPath(); c.moveTo(38 + ext, -2.6); c.lineTo(51 + ext, 0); c.lineTo(38 + ext, 2.6); c.closePath(); c.fill();
+                c.fillStyle = st.main; c.fillRect(33 + ext, -1.6, 4, 3.2);
+                c.restore();
+            }
+            c.fillStyle = st.main; bsRound(c, -7, -37, 14, 21, 3); c.fill();
+            c.strokeStyle = st.dark; c.lineWidth = 1.2; c.stroke();
+            c.fillStyle = st.dark; c.fillRect(-7, -25, 14, 3);
+            c.strokeStyle = 'rgba(255,255,255,0.3)'; c.lineWidth = 1;
+            for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(-6, -34 + i * 3.2); c.lineTo(6, -34 + i * 3.2); c.stroke(); }
+            c.fillStyle = '#e8c39e'; c.beginPath(); c.arc(0, -42, 5, 0, Math.PI * 2); c.fill();
+            c.fillStyle = '#374151'; c.beginPath(); c.arc(0, -43, 5.7, Math.PI, 0); c.fill();
+            c.fillStyle = st.main; c.fillRect(-0.9, -52, 1.8, 4.5);
+            c.fillStyle = st.light; c.beginPath(); c.ellipse(7, -26, 5.5, 10, 0, 0, Math.PI * 2); c.fill();
+            c.strokeStyle = st.dark; c.lineWidth = 1.8; c.stroke();
+            c.fillStyle = st.main; c.beginPath(); c.arc(7, -26, 2.2, 0, Math.PI * 2); c.fill();
+        }
+
+        function bsCav(c, st, phase, amp, aimUp, atk) {
+            c.lineCap = 'round'; c.lineJoin = 'round';
+            const w = BS.wt;
+            // 꼬리
+            c.strokeStyle = st.horseDark; c.lineWidth = 4;
+            c.beginPath(); c.moveTo(-25, -35);
+            c.quadraticCurveTo(-38, -36 + Math.sin(phase * 1.3) * 4 * amp, -42, -22 + Math.sin(phase) * 5 * amp); c.stroke();
+            // 다리 4개 (갤럽)
+            c.strokeStyle = st.horseDark; c.lineWidth = 3.8;
+            [[-17, 0], [-12, 2.2], [15, Math.PI], [20, Math.PI + 2.2]].forEach(([hx, off]) => {
+                const a = Math.sin(phase + off) * amp, lift = Math.max(0, Math.cos(phase + off)) * amp;
+                c.beginPath(); c.moveTo(hx, -24); c.lineTo(hx + a * 8, -12 - lift * 7); c.lineTo(hx + a * 15, -1 - lift * 8); c.stroke();
+            });
+            // 몸통
+            c.fillStyle = st.horse; c.beginPath(); c.ellipse(0, -31, 27, 11, 0, 0, Math.PI * 2); c.fill();
+            // 말갑옷(마갑) / 덮개
+            c.fillStyle = st.main; c.beginPath(); c.moveTo(-16, -40); c.lineTo(16, -40); c.lineTo(19, -21); c.lineTo(-19, -21); c.closePath(); c.fill();
+            c.strokeStyle = st.dark; c.lineWidth = 1.5; c.stroke();
+            c.fillStyle = '#fbbf24'; c.fillRect(-18, -23.5, 36, 2);
+            if (st.armored) {
+                c.strokeStyle = 'rgba(255,255,255,0.35)'; c.lineWidth = 1;
+                for (let i = -12; i <= 12; i += 6) { c.beginPath(); c.moveTo(i, -39); c.lineTo(i + 1.5, -22); c.stroke(); }
+            }
+            // 목 + 머리
+            c.fillStyle = st.horse;
+            c.beginPath(); c.moveTo(18, -36); c.quadraticCurveTo(28, -50, 34, -54); c.lineTo(42, -48); c.quadraticCurveTo(32, -40, 24, -24); c.closePath(); c.fill();
+            c.beginPath(); c.ellipse(41, -49, 9, 4.2, 0.55, 0, Math.PI * 2); c.fill();
+            if (st.armored) { c.fillStyle = '#9ca3af'; c.beginPath(); c.ellipse(42, -50, 6.5, 2.6, 0.55, 0, Math.PI * 2); c.fill(); }
+            c.strokeStyle = '#141414'; c.lineWidth = 2.6;
+            c.beginPath(); c.moveTo(20, -40); c.quadraticCurveTo(26, -54, 33, -57); c.stroke();
+            // 기수
+            c.save(); c.translate(2, -40);
+            c.strokeStyle = '#241a12'; c.lineWidth = 4; c.beginPath(); c.moveTo(0, 4); c.lineTo(5, 15); c.stroke();
+            c.fillStyle = st.main; bsRound(c, -5.5, -20, 11, 23, 3); c.fill();
+            c.strokeStyle = st.dark; c.lineWidth = 1.2; c.stroke();
+            c.fillStyle = st.dark; c.fillRect(-5.5, -6, 11, 2.6);
+            c.fillStyle = '#e8c39e'; c.beginPath(); c.arc(1, -26, 4.6, 0, Math.PI * 2); c.fill();
+            c.fillStyle = '#374151'; c.beginPath(); c.arc(1, -27, 5.3, Math.PI, 0); c.fill();
+            c.fillStyle = st.main; c.fillRect(0.2, -36, 1.8, 5);
+            // 기창
+            c.save(); c.translate(3, -13);
+            c.rotate(aimUp ? -1.25 : -0.04 - atk * 0.05);
+            const ext = aimUp ? 0 : Math.max(0, atk) * 8;
+            c.strokeStyle = '#6b4a2a'; c.lineWidth = 2.4; c.beginPath(); c.moveTo(-20, 0); c.lineTo(56 + ext, 0); c.stroke();
+            c.fillStyle = '#e5e7eb'; c.beginPath(); c.moveTo(56 + ext, -2.8); c.lineTo(71 + ext, 0); c.lineTo(56 + ext, 2.8); c.closePath(); c.fill();
+            const fw = Math.sin(w * 0.012 + phase) * 2.5;
+            c.fillStyle = st.main; c.beginPath();
+            c.moveTo(50 + ext, 0); c.lineTo(26 + ext, -5 + fw); c.lineTo(33 + ext, fw * 0.4); c.lineTo(26 + ext, 5 + fw * 0.2); c.closePath(); c.fill();
+            c.restore();
+            c.restore();
+        }
+
+        // ---------- 군기(깃발) ----------
+        function bsBanner(c, nation, side, x, y, raise) {
+            const st = NATION_STYLE[nation], dir = side === 'L' ? 1 : -1, wt = BS.wt;
+            const top = y - 112 - raise;
+            c.strokeStyle = '#4a321c'; c.lineWidth = 3.2;
+            c.beginPath(); c.moveTo(x, y - 18); c.lineTo(x, top - 6); c.stroke();
+            c.fillStyle = '#fbbf24'; c.beginPath(); c.arc(x, top - 8, 3.4, 0, Math.PI * 2); c.fill();
+            const fw = 54, fh = 36, segs = 10;
+            c.beginPath();
+            for (let i = 0; i <= segs; i++) {
+                const px = x - dir * (i * fw / segs), py = top + Math.sin(wt * 0.006 + i * 0.75) * 3.2 * (i / segs);
+                if (i) c.lineTo(px, py); else c.moveTo(px, py);
+            }
+            for (let i = segs; i >= 0; i--) {
+                const px = x - dir * (i * fw / segs), py = top + fh + Math.sin(wt * 0.006 + i * 0.75) * 3.2 * (i / segs);
+                c.lineTo(px, py);
+            }
+            c.closePath(); c.fillStyle = st.main; c.fill();
+            c.strokeStyle = st.dark; c.lineWidth = 2; c.stroke();
+            c.font = '900 22px "Noto Serif KR", serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.lineWidth = 3; c.strokeStyle = st.dark; c.strokeText(st.char, x - dir * fw * 0.5, top + fh / 2 + 1);
+            c.fillStyle = '#fff'; c.fillText(st.char, x - dir * fw * 0.5, top + fh / 2 + 1);
+        }
+
+        // ---------- 파티클 ----------
+        function bsDust(x, y, big) {
+            if (BS.particles.length > 280) return;
+            BS.particles.push({ k: 'd', x, y, vx: bsRnd(-0.04, 0.04), vy: bsRnd(-0.05, -0.01), age: 0, life: bsRnd(500, 900), s: bsRnd(5, 10) * (big ? 1.7 : 1) });
+        }
+        function bsBurst(x, y, n) {
+            for (let i = 0; i < n; i++) {
+                const a = bsRnd(0, Math.PI * 2), v = bsRnd(0.12, 0.5);
+                BS.particles.push({ k: 's', x: x + bsRnd(-12, 12), y: y + bsRnd(-10, 10), vx: Math.cos(a) * v * 1.3, vy: Math.sin(a) * v * 0.8 - 0.22, age: 0, life: bsRnd(350, 700), s: bsRnd(1.5, 3) });
+            }
+            for (let i = 0; i < 14; i++) bsDust(x + bsRnd(-30, 30), y + bsRnd(-8, 14), true);
+        }
+        function bsRing(x, y) { BS.particles.push({ k: 'r', x, y, age: 0, life: 520 }); }
+
+        // ---------- 유닛 상태 ----------
+        function bsUnitState(u, t) {
+            const S = BS.S, R = BATTLE_T.resolve;
+            let x = u.startX;
+            if (S.running && t >= u.s0) x = u.startX + (u.endX - u.startX) * bsEaseInOut((t - u.s0) / (u.e0 - u.s0));
+            const charging = S.running && t >= u.s0 && t < u.e0;
+            const arrived = S.running && t >= u.e0;
+            const winnerSide = (u.side === 'L') === S.attWins;
+            let alpha = 1, fall = 0, run = charging, atk = 0, mode = charging ? 'charge' : 'idle', aimUp = !S.running;
+            if (S.running && u.fallAt != null && t >= u.fallAt) {
+                fall = bsClamp((t - u.fallAt) / 320); run = false; mode = 'fallen'; aimUp = false; x = u.endX;
+                if (!winnerSide) alpha = 1 - 0.55 * bsClamp((t - 3600) / 900);
+            } else if (arrived) {
+                if (t < R) { x += Math.sin(t * 0.022 + u.seed) * 3; atk = Math.sin(t * 0.03 + u.seed); mode = 'melee'; aimUp = false; }
+                else {
+                    const q = (t - R) / 1100;
+                    if (winnerSide) { x += u.dir * bsEaseOut(q) * 70; mode = 'win'; run = q < 1; aimUp = q > 0.3; }
+                    else { x -= u.dir * bsEaseOut(q) * 240; alpha = 1 - bsClamp((t - R - 350) / 750); mode = 'lose'; run = q < 1; aimUp = false; }
+                }
+            } else if (charging) { aimUp = false; }
+            return { x, alpha, fall, run, atk, mode, aimUp };
+        }
+
+        function bsBigText(c, text, x, y, size, fill, alpha, scale) {
+            c.save(); c.globalAlpha = alpha; c.translate(x, y); c.scale(scale, scale);
+            c.font = '900 ' + size + 'px "Noto Serif KR", serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+            c.lineJoin = 'round'; c.lineWidth = Math.max(4, size * 0.16); c.strokeStyle = 'rgba(20,10,10,0.92)'; c.strokeText(text, 0, 0);
+            c.fillStyle = fill; c.fillText(text, 0, 0); c.restore();
+        }
+        function bsChip(c, x, y, text, color, align) {
+            c.font = '900 15px "Noto Serif KR", serif'; c.textBaseline = 'middle';
+            const w = c.measureText(text).width + 24, h = 28, x0 = align === 'left' ? x : x - w;
+            c.fillStyle = color; bsRound(c, x0, y, w, h, 14); c.fill();
+            c.strokeStyle = 'rgba(255,255,255,0.9)'; c.lineWidth = 2; c.stroke();
+            c.fillStyle = '#fff'; c.textAlign = 'center'; c.fillText(text, x0 + w / 2, y + h / 2 + 1);
+        }
+
+        // ---------- 한 프레임 렌더 ----------
+        function bsRender(t, dt, wt) {
+            const c = BS.ctx, W = BS.W, S = BS.S, R = BATTLE_T.resolve;
+            BS.wt = wt;
+            c.save();
+            let shake = 0;
+            if (S.running) {
+                if (t > BATTLE_T.clash && t < BATTLE_T.clash + 450) shake = 7 * (1 - (t - BATTLE_T.clash) / 450);
+                else if (t > 2350 && t < 2550) shake = 3 * (1 - (t - 2350) / 200);
+            }
+            if (shake > 0) c.translate(bsRnd(-shake, shake), bsRnd(-shake, shake));
+            c.drawImage(BS.bg, 0, 0);
+
+            // 이벤트 스케줄
+            if (S.running) {
+                while (t >= S.nextArrow && S.nextArrow < 1050) {
+                    ['L', 'R'].forEach(side => BS.arrows.push({
+                        side, t0: S.nextArrow, dur: bsRnd(600, 800),
+                        x0: side === 'L' ? bsRnd(50, 130) : W - bsRnd(50, 130), y0: bsRnd(205, 235),
+                        x1: side === 'L' ? bsRnd(520, 690) : bsRnd(30, 200), y1: bsRnd(240, 290)
+                    }));
+                    S.nextArrow += 75;
+                }
+                if (!S.fired.clash && t >= BATTLE_T.clash) { S.fired.clash = true; bsBurst(360, 258, 70); bsRing(360, 252); }
+                if (!S.fired.clash2 && t >= 2350) { S.fired.clash2 = true; bsBurst(346, 264, 35); bsBurst(374, 246, 30); }
+            }
+
+            // 속도선
+            if (S.running && t > 700 && t < 1950) {
+                const k = bsClamp((t - 700) / 300) * (1 - bsClamp((t - 1700) / 250));
+                c.strokeStyle = 'rgba(255,240,210,' + (0.22 * k).toFixed(3) + ')'; c.lineWidth = 1.5;
+                for (let i = 0; i < 12; i++) {
+                    const y = 222 + i * 7.5, x = (t * (0.9 + i * 0.06) + i * 91) % 330;
+                    c.beginPath(); c.moveTo(x, y); c.lineTo(x + 46, y); c.stroke();
+                    c.beginPath(); c.moveTo(W - x, y); c.lineTo(W - x - 46, y); c.stroke();
+                }
+            }
+
+            // 병사들
+            for (const u of BS.units) {
+                const s = bsUnitState(u, t);
+                if (s.run && u.type === 'cav' && Math.random() < 0.35) bsDust(s.x - u.dir * 20, u.y - 3, false);
+                else if (s.run && Math.random() < 0.1) bsDust(s.x - u.dir * 8, u.y - 2, false);
+                const phase = s.run ? s.x * 0.13 : (s.mode === 'melee' ? wt * 0.012 + u.seed : wt * 0.0018 + u.seed);
+                const amp = s.run ? 1 : (s.mode === 'melee' ? 0.7 : 0.12);
+                c.save(); c.globalAlpha = s.alpha;
+                c.fillStyle = 'rgba(0,0,0,0.28)'; c.beginPath(); c.ellipse(s.x, u.y + 1, (u.type === 'cav' ? 25 : 12) * u.sc, 4 * u.sc, 0, 0, Math.PI * 2); c.fill();
+                c.translate(s.x, u.y);
+                if (s.fall > 0) { c.rotate(-u.dir * s.fall * 1.45); c.translate(0, s.fall * 3); }
+                c.scale(u.dir * u.sc, u.sc);
+                const st = NATION_STYLE[u.nation];
+                if (u.type === 'cav') bsCav(c, st, phase, amp, s.aimUp, s.atk); else bsInf(c, st, phase, amp, s.aimUp, s.atk, false);
+                c.restore();
+            }
+
+            // 군기 + 기수
+            ['L', 'R'].forEach(side => {
+                const dir = side === 'L' ? 1 : -1, nation = side === 'L' ? S.attN : S.defN;
+                const winnerSide = (side === 'L') === S.attWins;
+                let x = side === 'L' ? 70 : W - 70, raise = 0, alpha = 1;
+                if (S.running) {
+                    x += dir * 95 * bsEaseInOut((t - 700) / 1500);
+                    if (t > R) {
+                        const q = (t - R) / 1100;
+                        if (winnerSide) { x += dir * bsEaseOut(q) * 50; raise = 18 * bsEaseOut(q); }
+                        else { x -= dir * bsEaseOut(q) * 200; alpha = 1 - bsClamp((t - R - 350) / 750); }
+                    }
+                }
+                c.save(); c.globalAlpha = alpha;
+                c.save(); c.translate(x, 304); c.scale(dir * 1.15, 1.15);
+                bsInf(c, NATION_STYLE[nation], wt * 0.0018, 0.12, true, 0, true);
+                c.restore();
+                bsBanner(c, nation, side, x + dir * 8, 304, raise);
+                c.restore();
+            });
+
+            // 화살
+            BS.arrows = BS.arrows.filter(a => t - a.t0 < a.dur);
+            for (const a of BS.arrows) {
+                const p = bsClamp((t - a.t0) / a.dur);
+                const px = a.x0 + (a.x1 - a.x0) * p, py = a.y0 + (a.y1 - a.y0) * p - Math.sin(Math.PI * p) * 95;
+                const p2 = Math.min(1, p + 0.03);
+                const qx = a.x0 + (a.x1 - a.x0) * p2, qy = a.y0 + (a.y1 - a.y0) * p2 - Math.sin(Math.PI * p2) * 95;
+                const ang = Math.atan2(qy - py, qx - px);
+                c.save(); c.translate(px, py); c.rotate(ang); c.globalAlpha = 1 - bsClamp((p - 0.9) / 0.1);
+                c.strokeStyle = '#3b2a1a'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-10, 0); c.lineTo(8, 0); c.stroke();
+                c.fillStyle = '#e5e7eb'; c.beginPath(); c.moveTo(8, -2); c.lineTo(13, 0); c.lineTo(8, 2); c.closePath(); c.fill();
+                c.fillStyle = '#fff'; c.fillRect(-11, -2, 4, 1.2); c.fillRect(-11, 0.8, 4, 1.2);
+                c.restore();
+            }
+
+            // 파티클 (먼지·불꽃·충격파)
+            BS.particles = BS.particles.filter(p => (p.age += dt) < p.life);
+            for (const p of BS.particles) {
+                const q = p.age / p.life;
+                if (p.k === 'd') {
+                    p.x += p.vx * dt; p.y += p.vy * dt;
+                    c.fillStyle = 'rgba(196,166,120,' + (0.42 * (1 - q)).toFixed(3) + ')';
+                    c.beginPath(); c.arc(p.x, p.y, p.s * (1 + q * 1.3), 0, Math.PI * 2); c.fill();
+                } else if (p.k === 's') {
+                    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.0009 * dt;
+                    c.fillStyle = 'rgba(255,' + Math.round(220 - q * 120) + ',90,' + (1 - q).toFixed(3) + ')';
+                    c.beginPath(); c.arc(p.x, p.y, p.s * (1 - q * 0.5), 0, Math.PI * 2); c.fill();
+                } else {
+                    const rx = 10 + q * 200;
+                    c.strokeStyle = 'rgba(255,240,200,' + (0.9 * (1 - q)).toFixed(3) + ')'; c.lineWidth = 5 * (1 - q) + 0.5;
+                    c.beginPath(); c.ellipse(p.x, p.y, rx, rx * 0.28, 0, 0, Math.PI * 2); c.stroke();
+                }
+            }
+
+            // 충돌 섬광
+            if (S.running && t > 1880 && t < 2020) {
+                c.fillStyle = 'rgba(255,244,214,' + (0.55 * (1 - (t - 1880) / 140)).toFixed(3) + ')';
+                c.fillRect(0, 0, W, BS.H);
+            }
+            c.restore();
+
+            // 자막 · HUD (흔들림 없이)
+            if (S.running) {
+                if (t > 150 && t < 1000) {
+                    const a = Math.min(1, (t - 150) / 120) * (1 - bsClamp((t - 800) / 200));
+                    bsBigText(c, '전군 돌격!', W / 2, 92, 40, '#fde68a', a, 0.7 + 0.3 * bsEaseOut((t - 150) / 180));
+                }
+                if (t > 3500) {
+                    const win = NATION_STYLE[S.attWins ? S.attN : S.defN];
+                    bsBigText(c, '🏆 ' + win.name + (S.attWins ? ' 공격 성공!' : ' 수비 성공!'), W / 2, 100, 40, win.light, bsClamp((t - 3500) / 200), 0.6 + 0.4 * bsEaseOut((t - 3500) / 260));
+                }
+            }
+            bsChip(c, 10, 10, '⚔️ 공격 · ' + NATION_STYLE[S.attN].name, NATION_STYLE[S.attN].main, 'left');
+            bsChip(c, W - 10, 10, '🛡️ 수비 · ' + NATION_STYLE[S.defN].name, NATION_STYLE[S.defN].main, 'right');
+        }
+        // ===== BATTLE SCENE END =====
+
+        function executeBattle() {
+            const btn = document.getElementById('start-battle-btn');
+            if (btn.disabled) return;
+            btn.disabled = true; btn.innerText = '⚔️ 전투 중...';
+            const { isCapital } = activeBattleData;
+            const attackWinChance = isCapital ? 0.3 : 0.5;
+            const win = Math.random() < attackWinChance;
+            startBattleScene(win, () => resolveBattle(win));
+        }
+
+        function resolveBattle(win) {
+            const { aIdx, def, pos, isCapital, isHangang } = activeBattleData;
+            const att = players[aIdx];
+            const defNation = isCapital ? capitalOwner[pos] : isHangang ? hangangOwner : def.nation;
+            let statusMsg = "";
+            let scoreDetail = "";
+
+            if (win) {
+                if (isHangang) {
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 한강 유역 쟁탈에 성공했습니다!`;
+                    scoreDetail = `(${nationNamesKo[att.nation]} +200점, ${nationNamesKo[defNation]} -200점)`;
+                    scores[att.nation] += 200;
+                    scores[defNation] -= 200;
+                    hangangOwner = att.nation;
+                    for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
+                    nationLands[att.nation].push(pos);
+                    applyLandColors();
+                    // 점령 특별 팝업은 closeBattleResult 후 처리
+                    activeBattleData._hangangWin = true;
+                } else if (isCapital) {
+                    const attackScore = 100;
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 수도 점령에 성공했습니다!`;
+                    scoreDetail = `(${nationNamesKo[att.nation]} +${attackScore}점)`;
+                    scores[att.nation] += attackScore;
+                    for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
+                    nationLands[att.nation].push(pos);
+                    applyLandColors();
+                } else {
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 공격에 성공했습니다!`;
+                    scoreDetail = `(${nationNamesKo[att.nation]} +70점, ${nationNamesKo[defNation]} -50점)`;
+                    scores[att.nation] += 70;
+                    scores[defNation] -= 50;
+                    for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
+                    nationLands[att.nation].push(pos);
+                    applyLandColors();
+                }
+            } else {
+                if (isHangang) {
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[defNation]}</b>가 한강 유역을 지켜냈습니다!`;
+                    scoreDetail = `(${nationNamesKo[defNation]} 수비 성공)`;
+                } else if (isCapital) {
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[defNation]}</b>가 수도를 수비에 성공하여 지켜냈습니다!`;
+                    scoreDetail = `(${nationNamesKo[defNation]} +20점)`;
+                    scores[defNation] += 20;
+                } else {
+                    statusMsg = `<b class="text-3xl font-black">${nationNamesKo[defNation]}</b>가 수비에 성공해서 국가의 위상을 지켜냈습니다!`;
+                    scoreDetail = `(${nationNamesKo[defNation]} +40점)`;
+                    scores[defNation] += 40;
+                }
+            }
+
+
+            updateScores();
+            stopBattleScene();
+            document.getElementById('battle-modal').style.display = 'none';
+            showBattleResultPopup(statusMsg, scoreDetail);
+        }
+
+        function showBattleResultPopup(title, detail) {
+            const modal = document.getElementById('battle-result-modal');
+            const content = document.getElementById('battle-result-content');
+            content.innerHTML = `<span class="text-slate-800 block mb-4 leading-tight">${title}</span><span class="text-blue-600 font-bold text-lg">${detail}</span>`;
+            modal.style.display = 'flex';
+        }
+
+        function closeBattleResult() {
+            document.getElementById('battle-result-modal').style.display = 'none';
+            // 한강 쟁탈 승리 시 특별 팝업
+            if (activeBattleData && activeBattleData._hangangWin) {
+                const nation = players[activeBattleData.aIdx].nation;
+                activeBattleData = null;
+                showHangangClaim(nation);
+                return;
+            }
+            activeBattleData = null;
+            nextTurn();
+        }
+
+        function showHangangClaim(nation) {
+            document.getElementById('hangang-nation').innerText = nationNamesKo[nation];
+            document.getElementById('hangang-nation').className = `font-black text-2xl mb-2 ${ {koguryo:'text-blue-600', baekje:'text-red-600', silla:'text-green-600'}[nation] }`;
+            document.getElementById('hangang-modal').style.display = 'flex';
+        }
+
+        function closeHangangModal() {
+            document.getElementById('hangang-modal').style.display = 'none';
+            nextTurn();
+        }
+
+        function updateScores() {
+            ['koguryo', 'baekje', 'silla'].forEach(n => {
+                document.getElementById(`land-${n}`).innerText = nationLands[n].length;
+                document.getElementById(`cards-${n}`).innerText = nationCards[n];
+                const scoreElem = document.getElementById(`score-${n}`);
+                if (scoreElem.innerText != scores[n]) {
+                    scoreElem.innerText = scores[n]; scoreElem.classList.add('score-pop');
+                    setTimeout(() => scoreElem.classList.remove('score-pop'), 500);
+                }
+            });
+        }
+
+        function nextTurn() {
+            turnIndex = (turnIndex + 1) % turnOrder.length;
+            updateTurnUI();
+            players.forEach((_, i) => updatePlayerPosition(i));
+        }
+
+        function updateTurnUI() {
+            const p = players[turnOrder[turnIndex]];
+            const ind = document.getElementById('current-turn-indicator');
+            const name = document.getElementById('turn-name');
+            ind.innerHTML = EMBLEM[p.nation](48); name.innerText = p.name;
+            const colors = { koguryo: 'text-blue-800', baekje: 'text-red-800', silla: 'text-green-800' };
+            name.className = `text-lg font-black ${colors[p.nation]}`;
+        }
+
+        window.onload = initBoard;
+    </script>
+<canvas id="fx-canvas"></canvas>
+    <div id="fx-flash"></div>
+</body>
+</html>
