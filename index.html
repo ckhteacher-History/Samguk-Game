@@ -525,6 +525,15 @@
     </div>
 
     <!-- 오답 시 국가 선택 모달 -->
+    <div id="invincible-modal" class="modal">
+        <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-amber-500 text-center">
+            <div class="text-5xl mb-3">🗡️</div>
+            <h2 class="text-xl font-black text-slate-800 mb-1">무적 공격권</h2>
+            <h2 class="text-lg font-black text-slate-700 mb-6">공격할 나라를 선택하세요</h2>
+            <div id="invincible-buttons" class="grid grid-cols-2 gap-3"></div>
+        </div>
+    </div>
+
     <div id="nation-pick-modal" class="modal">
         <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-amber-500 text-center">
             <div class="text-5xl mb-4">🏆</div>
@@ -623,7 +632,7 @@
             <div id="item-nat-badge" class="hidden"></div>
             <h2 id="item-name" class="text-2xl font-black mb-2 text-slate-800">보물이름</h2>
             <p id="item-desc" class="text-sm text-slate-600 font-bold leading-relaxed mb-3 text-left px-1"></p>
-            <p class="text-base font-black text-yellow-600 mb-4">+30점 보너스 획득!</p>
+            <p id="item-bonus" class="text-base font-black text-yellow-600 mb-4">+30점 보너스 획득!</p>
             <button onclick="closeItemResult()" class="bg-slate-800 text-white w-full py-4 rounded-xl font-black text-xl">확인</button>
         </div>
     </div>
@@ -1122,6 +1131,14 @@
             } else { showQuiz(idx, pos, null); }
         }
 
+        // 특수 아이템 (효과가 있는 아이템)
+        artifacts.push(
+            { name: "개마무사", special: "gaema", img: "", desc: "개마(鎧馬)는 말에게까지 갑옷을 입힌 것으로, 개마무사는 사람과 말이 모두 갑옷으로 무장한 고구려의 중무장 기병입니다. 강력한 돌격력으로 고구려 군대의 주력을 이루었고, 고분벽화에도 그 모습이 남아 있습니다." },
+            { name: "무적 공격권", special: "invincible", img: "", desc: "어떤 방어도 뚫고 들어가는 무적의 공격권입니다. 공격하고 싶은 나라를 하나 골라 그 나라의 점수를 0점으로 만들 수 있습니다!" }
+        );
+        const SPECIAL_RATE = 0.16;   // 특수 아이템 두 개를 합친 등장 확률(각 8%)
+        let bonusRolls = 0;
+        let pendingSpecial = null;
         const RARE_NAMES = ["칠지도","백제금동대향로","광개토대왕릉비","신라 금관","천마도","신라 성덕대왕 신종","무령왕릉 금제 관장식","가야 금동관"];
         const RARE_RATE = 0.2;
         artifacts.forEach(a => a.rare = RARE_NAMES.includes(a.name));
@@ -1216,29 +1233,32 @@
             const box = document.getElementById('item-box-closed');
             if (btn.disabled) return;
             btn.disabled = true;
-            const rare = (window.__forceRare !== undefined) ? window.__forceRare : Math.random() < RARE_RATE;
-            let pool = artifacts.filter(a => a.rare === rare); if (!pool.length) pool = artifacts;
+            let rare, special = false;
+            if (window.__forceRare !== undefined) { rare = window.__forceRare; special = window.__forceSpecial || false; }
+            else { const q = Math.random(); rare = q < RARE_RATE; special = !rare && q < RARE_RATE + SPECIAL_RATE; }
+            let pool = special ? artifacts.filter(a => a.special) : artifacts.filter(a => !a.special && a.rare === rare);
+            if (!pool.length) pool = artifacts.filter(a => !a.special);
             const item = pool[Math.floor(Math.random() * pool.length)];
             const r = box.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height * .55;
-            const charge = rare ? 1700 : 1100;
+            const fancy = rare || special;
+            const charge = fancy ? 1700 : 1100;
 
-            box.className = 'shaking' + (rare ? ' charge-rare' : '');
+            box.className = 'shaking' + (fancy ? ' charge-rare' : '');
             fxStart();
-            fxPlay('charge', { x: cx, y: cy, dur: charge / 1000, rate: rare ? 120 : 60, rare });
+            fxPlay('charge', { x: cx, y: cy, dur: charge / 1000, rate: fancy ? 120 : 60, rare: fancy });
 
             setTimeout(() => {
                 box.className = 'open';
-                fxFlash(cx, cy, rare);
-                fxBurst(cx, cy - 10, rare ? 90 : 45, rare, rare ? 520 : 380);
-                if (rare) setTimeout(() => fxBurst(cx, cy - 10, 60, true, 700), 180);
+                fxFlash(cx, cy, fancy);
+                fxBurst(cx, cy - 10, fancy ? 90 : 45, fancy, fancy ? 520 : 380);
+                if (fancy) setTimeout(() => fxBurst(cx, cy - 10, 60, true, 700), 180);
             }, charge);
 
             setTimeout(() => {
                 const currentNation = players[turnOrder[turnIndex]].nation;
-                scores[currentNation] += 30;
-                updateScores();
+                if (!special) { scores[currentNation] += 30; updateScores(); }
                 document.getElementById('item-modal').style.display = 'none';
-                showItemResult(item, rare);
+                showItemResult(item, rare || special);
                 box.className = '';
                 btn.disabled = false;
             }, charge + 650);
@@ -1249,14 +1269,19 @@
             const img = document.getElementById('item-img');
             // 저장소의 images/유물이름.(jpg|jpeg|png|webp) 를 먼저 쓰고, 없으면 구글 드라이브 링크로 대체
             const base = 'images/' + encodeURIComponent(item.name);
-            img.style.backgroundImage = ['jpg', 'jpeg', 'png', 'webp'].map(e => `url('${base}.${e}')`).concat(`url('${item.img}')`).join(', ');
+            img.style.backgroundImage = ['jpg', 'jpeg', 'png', 'webp'].map(e => `url('${base}.${e}')`).concat(item.img ? [`url('${item.img}')`] : []).join(', ');
+            const bonus = document.getElementById('item-bonus');
+            if (item.special === 'gaema') bonus.innerText = '이번 차례에 주사위를 2번 더 던질 수 있습니다!';
+            else if (item.special === 'invincible') bonus.innerText = '공격할 나라를 골라 그 나라의 점수를 0점으로 만듭니다!';
+            else bonus.innerText = '+30점 보너스 획득!';
+            pendingSpecial = item.special || null;
             document.getElementById('item-nat-badge').style.display = 'none';
             document.getElementById('item-desc').innerText = item.desc;
             const modal = document.getElementById('item-result-modal');
             const card = document.getElementById('item-result-card');
             modal.classList.remove('is-rare', 'is-common'); modal.classList.add(rare ? 'is-rare' : 'is-common');
             const tag = document.getElementById('item-rarity');
-            tag.innerText = rare ? '★ 稀貴 · 레어 유물 ★' : '一般 · 일반 유물';
+            tag.innerText = item.special ? '★ 特殊 · 특수 아이템 ★' : (rare ? '★ 稀貴 · 레어 유물 ★' : '一般 · 일반 유물');
             card.classList.remove('card-spin', 'pop', 'rare-card'); void card.offsetWidth;
             card.classList.add(rare ? 'rare-card' : 'pop');
             modal.style.display = 'flex';
@@ -1279,6 +1304,27 @@
         function closeItemResult() {
             fxStopAmbient();
             document.getElementById('item-result-modal').style.display = 'none';
+            const sp = pendingSpecial; pendingSpecial = null;
+            if (sp === 'gaema') { bonusRolls = 2; nextTurn(); return; }
+            if (sp === 'invincible') { openInvincible(); return; }
+            nextTurn();
+        }
+
+        function openInvincible() {
+            const me = players[turnOrder[turnIndex]].nation;
+            const box = document.getElementById('invincible-buttons');
+            const col = { koguryo: 'bg-blue-600 hover:bg-blue-700', baekje: 'bg-red-600 hover:bg-red-700', silla: 'bg-green-600 hover:bg-green-700' };
+            box.innerHTML = ['koguryo', 'baekje', 'silla'].filter(n => n !== me).map(n =>
+                `<button onclick="useInvincible('${n}')" class="${col[n]} active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg flex flex-col items-center gap-1"><span class="text-3xl">${nationChars[n]}</span><span>${nationNamesKo[n]}</span><span class="text-sm opacity-90">현재 ${scores[n]}점</span></button>`).join('');
+            document.getElementById('invincible-modal').style.display = 'flex';
+        }
+
+        function useInvincible(target) {
+            const before = scores[target];
+            scores[target] = 0;
+            updateScores();
+            document.getElementById('invincible-modal').style.display = 'none';
+            showToast(`🗡️ 무적 공격권! ${nationNamesKo[target]}의 점수 ${before}점 → 0점`);
             nextTurn();
         }
 
@@ -2018,6 +2064,13 @@
         }
 
         function nextTurn() {
+            if (bonusRolls > 0) {
+                bonusRolls--;
+                showToast(`🐎 개마무사! 주사위를 다시 던지세요 (남은 횟수 ${bonusRolls + 1}번)`);
+                updateTurnUI();
+                players.forEach((_, i) => updatePlayerPosition(i));
+                return;
+            }
             turnIndex = (turnIndex + 1) % turnOrder.length;
             updateTurnUI();
             players.forEach((_, i) => updatePlayerPosition(i));
