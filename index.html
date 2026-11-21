@@ -1245,7 +1245,9 @@
         function showItemResult(item, rare) {
             document.getElementById('item-name').innerText = item.name;
             const img = document.getElementById('item-img');
-            img.style.backgroundImage = `url('${item.img}')`;
+            // 저장소의 images/유물이름.(jpg|jpeg|png|webp) 를 먼저 쓰고, 없으면 구글 드라이브 링크로 대체
+            const base = 'images/' + encodeURIComponent(item.name);
+            img.style.backgroundImage = ['jpg', 'jpeg', 'png', 'webp'].map(e => `url('${base}.${e}')`).concat(`url('${item.img}')`).join(', ');
             document.getElementById('item-nat-badge').style.display = 'none';
             document.getElementById('item-desc').innerText = item.desc;
             const modal = document.getElementById('item-result-modal');
