@@ -1183,7 +1183,7 @@
         // 특수 아이템 (효과가 있는 아이템)
         artifacts.push(
             { name: "개마무사", special: "gaema", img: "", desc: "개마(鎧馬)는 말에게까지 갑옷을 입힌 것으로, 개마무사는 사람과 말이 모두 갑옷으로 무장한 고구려의 중무장 기병입니다. 강력한 돌격력으로 고구려 군대의 주력을 이루었고, 고분벽화에도 그 모습이 남아 있습니다." },
-            { name: "무적 공격권", special: "invincible", img: "", desc: "어떤 방어도 뚫고 들어가는 무적의 공격권입니다. 공격하고 싶은 나라를 하나 골라 그 나라의 점수를 0점으로 만들 수 있습니다!" }
+            { name: "무적 공격권", special: "invincible", img: "", desc: "어떤 방어도 뚫고 들어가는 무적의 공격권입니다. 공격하고 싶은 나라를 하나 골라 그 나라의 점수를 100점 깎을 수 있습니다!" }
         );
         const SPECIAL_RATE = 0.16;   // 특수 아이템 두 개를 합친 등장 확률(각 8%)
         let bonusRolls = 0;
@@ -1321,7 +1321,7 @@
             img.style.backgroundImage = ['jpg', 'jpeg', 'png', 'webp'].map(e => `url('${base}.${e}')`).concat(item.img ? [`url('${item.img}')`] : []).join(', ');
             const bonus = document.getElementById('item-bonus');
             if (item.special === 'gaema') bonus.innerText = '이번 차례에 주사위를 2번 더 던질 수 있습니다!';
-            else if (item.special === 'invincible') bonus.innerText = '공격할 나라를 골라 그 나라의 점수를 0점으로 만듭니다!';
+            else if (item.special === 'invincible') bonus.innerText = '공격할 나라를 골라 그 나라의 점수를 -100점 깎습니다!';
             else bonus.innerText = '+30점 보너스 획득!';
             pendingSpecial = item.special || null;
             document.getElementById('item-nat-badge').style.display = 'none';
@@ -1370,10 +1370,10 @@
 
         function useInvincible(target) {
             const before = scores[target];
-            scores[target] = 0;
+            scores[target] -= 100;
             updateScores();
             document.getElementById('invincible-modal').style.display = 'none';
-            showToast(`🗡️ 무적 공격권! ${nationNamesKo[target]}의 점수 ${before}점 → 0점`);
+            showToast(`🗡️ 무적 공격권! ${nationNamesKo[target]}의 점수 -100점 (${before}점 → ${scores[target]}점)`);
             nextTurn();
         }
 
