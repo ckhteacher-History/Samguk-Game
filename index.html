@@ -486,21 +486,21 @@
                 <span data-emblem="koguryo" data-size="44"></span>
                 <div>
                     <div><span class="nm-hj">고구려</span><span class="nm-ko">高句麗 · 靑</span></div>
-                    <div class="st">領土 <b id="land-koguryo">2</b> ｜ 點數 <b id="score-koguryo">0</b><br>人物 <b id="cards-koguryo">0</b>장</div>
+                    <div class="st">영토 <b id="land-koguryo">2</b> ｜ 점수 <b id="score-koguryo">0</b><br>인물카드 <b id="cards-koguryo">0</b>장</div>
                 </div>
             </div>
             <div class="score-card" style="color:#8b1a1a;">
                 <span data-emblem="baekje" data-size="44"></span>
                 <div>
                     <div><span class="nm-hj">백제</span><span class="nm-ko">百濟 · 赤</span></div>
-                    <div class="st">領土 <b id="land-baekje">2</b> ｜ 點數 <b id="score-baekje">0</b><br>人物 <b id="cards-baekje">0</b>장</div>
+                    <div class="st">영토 <b id="land-baekje">2</b> ｜ 점수 <b id="score-baekje">0</b><br>인물카드 <b id="cards-baekje">0</b>장</div>
                 </div>
             </div>
             <div class="score-card" style="color:#14532d;">
                 <span data-emblem="silla" data-size="44"></span>
                 <div>
                     <div><span class="nm-hj">신라</span><span class="nm-ko">新羅 · 綠</span></div>
-                    <div class="st">領土 <b id="land-silla">2</b> ｜ 點數 <b id="score-silla">0</b><br>人物 <b id="cards-silla">0</b>장</div>
+                    <div class="st">영토 <b id="land-silla">2</b> ｜ 점수 <b id="score-silla">0</b><br>인물카드 <b id="cards-silla">0</b>장</div>
                 </div>
             </div>
         </div>
@@ -510,7 +510,7 @@
     <div class="board-wrapper">
         <div id="map-bg" class="map-bg"></div>
         <div class="card-counter-center">
-            <p class="text-xs font-bold text-amber-900 mb-1">人物 · 남은 인물 카드</p>
+            <p class="text-xs font-bold text-amber-900 mb-1">남은 인물 카드</p>
             <p id="remaining-cards" class="text-3xl font-black text-amber-900">21</p>
         </div>
         <div id="game-board" class="board-container"></div>
@@ -1186,7 +1186,7 @@
         const SPECIAL_RATE = 0.16;   // 특수 아이템 두 개를 합친 등장 확률(각 8%)
         let bonusRolls = 0;
         let pendingSpecial = null;
-        const RARE_NAMES = ["칠지도","백제금동대향로","광개토대왕릉비","신라 금관","천마도","신라 성덕대왕 신종","무령왕릉 금제 관장식","가야 금동관"];
+        const RARE_NAMES = ["칠지도","백제금동대향로","광개토대왕릉비","신라 금관","천마도","신라 성덕대왕 신종","첨성대","백제 서산 용현리 마애여래삼존상"];
         const RARE_RATE = 0.2;
         artifacts.forEach(a => a.rare = RARE_NAMES.includes(a.name));
 
