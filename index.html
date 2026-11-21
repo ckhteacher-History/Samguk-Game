@@ -433,6 +433,8 @@
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
         .cell { padding-bottom: clamp(24px, 3.9vh, 32px) !important; }
+        /* 말 이동: 일정한 속도로 한 칸씩 정확히 */
+        .player { transition: top .2s linear, left .2s linear, transform .25s ease, filter .25s ease !important; }
     </style>
 </head>
 <body class="p-4">
@@ -986,7 +988,7 @@
             
             const nl = pIcon.style.left, nt = pIcon.style.top;
             if (pIcon._pl !== undefined && (pIcon._pl !== nl || pIcon._pt !== nt) && !pIcon._tr) {
-                pIcon._tr = true; spawnTrail(idx); setTimeout(() => pIcon._tr = false, 380);
+                pIcon._tr = true; spawnTrail(idx); setTimeout(() => pIcon._tr = false, 120);
             }
             pIcon._pl = nl; pIcon._pt = nt;
             if (idx === turnOrder[turnIndex]) pIcon.classList.add('active-player');
@@ -1035,7 +1037,7 @@
                     s.addEventListener('animationend', () => s.remove());
                     board.appendChild(s);
                 }
-                if (++ticks > 14) clearInterval(iv);
+                if (++ticks > 6) clearInterval(iv);
             }, 36);
         }
 
@@ -1043,7 +1045,7 @@
             for(let i=0; i<steps; i++) {
                 players[idx].pos = (players[idx].pos + 1) % 30;
                 updatePlayerPosition(idx);
-                await new Promise(r => setTimeout(r, 150));
+                await new Promise(r => setTimeout(r, 200));
             }
             players.forEach((_, i) => updatePlayerPosition(i));
             setTimeout(() => checkCell(idx), 300);
