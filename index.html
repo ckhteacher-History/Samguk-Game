@@ -469,7 +469,7 @@
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
         .cell { padding-bottom: clamp(24px, 3.9vh, 32px) !important; }
         /* 말 이동: 일정한 속도로 한 칸씩 정확히 */
-        .player { transition: top .2s linear, left .2s linear, transform .25s ease, filter .25s ease !important; }
+        .player { transition: top .12s cubic-bezier(.2,.8,.3,1), left .12s cubic-bezier(.2,.8,.3,1), transform .25s ease, filter .25s ease !important; }
     </style>
 </head>
 <body class="p-4">
@@ -1100,7 +1100,9 @@
             for(let i=0; i<steps; i++) {
                 players[idx].pos = (players[idx].pos + 1) % 30;
                 updatePlayerPosition(idx);
-                await new Promise(r => setTimeout(r, 200));
+                const ic = document.getElementById(`player-icon-${idx}`);
+                if (ic && ic.animate) ic.animate([{ translate: '0 0' }, { translate: '0 -15px', offset: .4 }, { translate: '0 0' }], { duration: 170, easing: 'ease-out' });
+                await new Promise(r => setTimeout(r, 300));
             }
             players.forEach((_, i) => updatePlayerPosition(i));
             setTimeout(() => checkCell(idx), 300);
