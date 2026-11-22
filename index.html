@@ -563,6 +563,19 @@
         .od-tag { flex:1; text-align:left; } .od-pct { width:52px; text-align:right; font-size:18px; font-weight:900; } .od-pt { width:80px; text-align:right; }
         .od-note { margin-top:6px; font-size:11.5px; color:#8a7a5a; font-weight:700; }
 
+        /* 한강 유역: 특별 연출 */
+        #region-modal.epic { background: radial-gradient(ellipse at 50% 55%, rgba(255,200,60,.28), rgba(0,0,0,.0) 65%); }
+        #region-modal.epic .r-rays { opacity:.95; animation-duration: 12s; width:2200px; height:2200px; margin:-1100px 0 0 -1100px;
+            background: repeating-conic-gradient(from 0deg, rgba(255,226,120,.75) 0deg 5deg, transparent 5deg 15deg); }
+        #region-modal.epic .region-card { box-shadow: 0 0 0 3px var(--nc), 0 0 0 6px #ffe08a, 0 0 0 8px #7a5412, 0 0 90px 24px rgba(255,214,90,.85), 0 30px 70px rgba(0,0,0,.7); animation: rgIn .9s cubic-bezier(.2,1.25,.35,1), epicPulse 1.6s ease-in-out 1s infinite; }
+        @keyframes epicPulse { 0%,100%{ filter:brightness(1) } 50%{ filter:brightness(1.1) } }
+        #region-modal.epic .rg-banner { font-size:clamp(18px,4vw,26px); padding:9px 28px 9px 20px; background: linear-gradient(90deg, #b8860b, #ffd75e, #b8860b); color:#3a2300; text-shadow:0 1px 0 rgba(255,255,255,.5); }
+        #region-modal.epic .rg-stamp { width:78px; height:78px; font-size:40px; }
+        #region-modal.epic .rg-result { background: linear-gradient(90deg,#fff3c4,#ffe28a,#fff3c4); border-color:#d4a437; }
+        #region-modal.epic .rg-photo::after { content:''; position:absolute; left:-10%; right:-10%; bottom:-6px; height:46px; pointer-events:none;
+            background: radial-gradient(60px 18px at 30px 18px, rgba(130,200,255,.55) 98%, transparent) 0 0/120px 36px repeat-x; animation: waveMove 3s linear infinite; opacity:.8; }
+        @keyframes waveMove { to { background-position: 120px 0 } }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -1274,7 +1287,7 @@
                     applyLandColors();
                     scores[nation] += 150;
                     updateScores();
-                    showHangangClaim(nation);
+                    showRegionCard(HANGANG_POS, nation, null, `${nationNamesKo[nation]}가 한강 유역을 차지했습니다!`, '(최초 점령 +150점)', true);
                 } else if (hangangOwner === nation) {
                     // 내 땅: 보급품
                     scores[nation] += 30;
@@ -2234,8 +2247,7 @@
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
                     applyLandColors();
-                    // 점령 특별 팝업은 closeBattleResult 후 처리
-                    activeBattleData._hangangWin = true;
+                    pendingCapture = { pos, nation: att.nation, msg: `${nationNamesKo[att.nation]}가 ${nationNamesKo[defNation]}에게서 한강 유역을 빼앗았습니다!`, detail: scoreDetail, epic: true };
                 } else if (isCapital) {
                     const attackScore = 100;
                     statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 수도 점령에 성공했습니다!`;
@@ -2277,7 +2289,7 @@
             document.getElementById('battle-modal').style.display = 'none';
             if (pendingCapture) {
                 const c = pendingCapture; pendingCapture = null; activeBattleData = null;
-                showRegionCard(c.pos, c.nation, null, c.msg, c.detail);
+                showRegionCard(c.pos, c.nation, null, c.msg, c.detail, c.epic);
                 return;
             }
             showBattleResultPopup(statusMsg, scoreDetail);
@@ -2307,11 +2319,11 @@
         const NATION_STAMP = { koguryo: '高', baekje: '百', silla: '新' };
         let regionAfter = null;
         function josa(w, a, b) { const c = w.charCodeAt(w.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0) ? a : b; }
-        function showRegionCard(pos, nation, after, msg, detail) {
+        function showRegionCard(pos, nation, after, msg, detail, epic) {
             const name = regions[pos];
             regionAfter = after || null;
             const modal = document.getElementById('region-modal');
-            modal.classList.remove('n-koguryo', 'n-baekje', 'n-silla'); modal.classList.add('n-' + nation);
+            modal.classList.remove('n-koguryo', 'n-baekje', 'n-silla', 'epic'); modal.classList.add('n-' + nation); if (epic) modal.classList.add('epic');
             const rr = document.getElementById('rg-result');
             if (msg) { document.getElementById('rg-result-msg').innerText = msg; document.getElementById('rg-result-detail').innerText = detail || ''; rr.classList.add('on'); } else rr.classList.remove('on');
             document.getElementById('rg-name').innerText = name;
@@ -2338,10 +2350,21 @@
             modal.style.display = 'flex';
             const rc = card.getBoundingClientRect(), x = rc.left + rc.width / 2, y = rc.top + rc.height * .35;
             fxStart(); fxFlash(x, y, true);
-            fxBurst(x, y, 80, true, 640);
+            fxBurst(x, y, epic ? 160 : 80, true, epic ? 820 : 640);
             setTimeout(() => fxBurst(rc.right - 46, rc.top + 46, 40, true, 420), 1000);
-            fxConfetti(40);
-            fxPlay('ambient', { el: card, dur: 9999, rate: 20 });
+            fxConfetti(epic ? 120 : 40);
+            fxPlay('ambient', { el: card, dur: 9999, rate: epic ? 60 : 20 });
+            if (epic) {
+                [250, 550, 900, 1400, 2000].forEach((t, k) => setTimeout(() => {
+                    if (document.getElementById('region-modal').style.display === 'none') return;
+                    const r2 = card.getBoundingClientRect();
+                    fxFlash(r2.left + r2.width * (k % 2 ? .25 : .75), r2.top + r2.height * .3, true);
+                    fxBurst(r2.left + r2.width * (k % 2 ? .2 : .8), r2.top + r2.height * (.25 + .1 * (k % 3)), 70, true, 600);
+                    if (k % 2 === 0) fxConfetti(40);
+                }, t));
+                document.body.classList.remove('dm-quake'); void document.body.offsetWidth; document.body.classList.add('dm-quake');
+                setTimeout(() => document.body.classList.remove('dm-quake'), 700);
+            }
         }
         function closeRegionCard() {
             fxStopAmbient();
