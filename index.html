@@ -650,6 +650,32 @@
         .tp-btn:hover { background:linear-gradient(180deg,#5a1010,#2a0808); color:#fff; }
         @media (max-height:760px) { .tp-photo { aspect-ratio: 16/9; } .tp-ph b { font-size:80px; } .tp-score b { font-size:42px; } }
 
+        /* 라운드 정산 */
+        #settle-modal { overflow:hidden; --nc:#8a6a2a; --nc2:#f1d98a; }
+        #settle-modal .r-rays { position:absolute; left:50%; top:50%; width:1500px; height:1500px; margin:-750px 0 0 -750px; pointer-events:none; opacity:.5;
+            background: repeating-conic-gradient(from 0deg, rgba(241,217,138,.5) 0deg 4deg, transparent 4deg 18deg);
+            -webkit-mask-image: radial-gradient(circle, #000 6%, transparent 60%); mask-image: radial-gradient(circle, #000 6%, transparent 60%); animation: spinRays 30s linear infinite; }
+        .st-card { position:relative; z-index:3; width:min(94vw, 560px); padding:26px 28px 22px; text-align:center; font-family:'Noto Serif KR','Nanum Myeongjo',serif; border-radius:16px;
+            background: linear-gradient(160deg, #fbf4e2, #f1e4c3); border:1px solid #1b1510; box-shadow: 0 0 0 3px #8a6a2a, 0 0 0 5px #e8c76a, 0 0 40px 8px rgba(241,217,138,.55), 0 30px 60px rgba(0,0,0,.6);
+            animation: rgIn .7s cubic-bezier(.2,1.15,.35,1); }
+        .st-top { font-size:12px; letter-spacing:.6em; color:#8a6a2a; font-weight:700; padding-left:.6em; }
+        .st-title { margin:4px 0 0; font-size:clamp(1.8rem,6vw,2.4rem); font-weight:900; color:#2b1d0e; letter-spacing:.06em; }
+        .st-title span { color:#b3322f; }
+        .st-sub { font-size:14px; color:#6b5a3d; font-weight:700; margin-top:2px; }
+        .st-rule { width:70%; margin:10px auto; display:flex; align-items:center; gap:10px; color:#b88a2a; font-size:12px; }
+        .st-rule::before, .st-rule::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, #b88a2a, transparent); }
+        .st-rows { display:grid; gap:8px; }
+        .st-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:10px; color:#fff; text-align:left; border:2px solid #e8c76a; animation: stRow .5s ease-out both; }
+        .st-row.n-koguryo { background:linear-gradient(160deg,#2f63d6,#1e3a8a) } .st-row.n-baekje { background:linear-gradient(160deg,#c9382f,#7a1414) } .st-row.n-silla { background:linear-gradient(160deg,#2f9a5e,#14532d) }
+        @keyframes stRow { from { transform:translateX(-30px); opacity:0 } to { transform:none; opacity:1 } }
+        .st-nm { font-size:24px; font-weight:900; letter-spacing:.06em; width:76px; }
+        .st-det { flex:1; font-size:13px; font-weight:700; line-height:1.5; opacity:.95; }
+        .st-det b { color:#ffe9a8; }
+        .st-pt { font-size:34px; font-weight:900; color:#fff3c2; text-shadow:0 0 12px rgba(255,220,120,.8); min-width:84px; text-align:right; font-variant-numeric: tabular-nums; }
+        .st-note { margin:12px 0 14px; font-size:12px; color:#8a7a5a; font-weight:700; }
+        .st-btn { width:100%; padding:13px 0; border-radius:10px; background:#2b1d0e; color:#f1d98a; border:1px solid #c9a24a; font-weight:900; font-size:17px; letter-spacing:.25em; cursor:pointer; font-family:inherit; }
+        .st-btn:hover { background:#3d2a12; }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -986,6 +1012,20 @@
             <div id="trap-content" class="tp-desc"></div>
             <div class="tp-score"><small id="tp-nation">백제</small><b id="tp-pt">-100</b><small>점</small></div>
             <button onclick="closeTrapModal()" class="tp-btn">운명을 받아들인다</button>
+        </div>
+    </div>
+
+    <!-- 라운드 정산 -->
+    <div id="settle-modal" class="modal">
+        <div class="r-rays"></div>
+        <div class="st-card">
+            <div class="st-top">라운드 정산</div>
+            <h2 class="st-title"><span id="st-round">1</span>라운드 종료</h2>
+            <div class="st-sub">보유한 영토에 따라 점수를 받습니다</div>
+            <div class="st-rule"><span>❖</span></div>
+            <div id="st-rows" class="st-rows"></div>
+            <div class="st-note">영토 1곳당 +5점 · 한강 유역 보유 시 +20점</div>
+            <button onclick="closeSettlement()" class="st-btn">다음 라운드 시작</button>
         </div>
     </div>
 
@@ -2542,6 +2582,39 @@
             });
         }
 
+        // ===== 라운드 정산: 6팀이 모두 한 번씩 돈 뒤, 새 라운드 시작 직전 =====
+        let roundNo = 1;
+        function showSettlement() {
+            const rows = document.getElementById('st-rows'); rows.innerHTML = '';
+            document.getElementById('st-round').innerText = roundNo;
+            ['koguryo', 'baekje', 'silla'].forEach((n, k) => {
+                const land = nationLands[n].filter(x => x !== HANGANG_POS).length;
+                const han = hangangOwner === n;
+                const pts = land * 5 + (han ? 20 : 0);
+                scores[n] += pts;
+                const row = document.createElement('div'); row.className = 'st-row n-' + n; row.style.animationDelay = (k * 0.15) + 's';
+                row.innerHTML = `<div class="st-nm">${nationNamesKo[n]}</div><div class="st-det">영토 <b>${land}곳</b> × 5 = ${land * 5}점<br>${han ? '한강 유역 <b>보유</b> +20점' : '한강 유역 미보유'}</div><div class="st-pt" data-to="${pts}">+0</div>`;
+                rows.appendChild(row);
+            });
+            updateScores();
+            document.getElementById('settle-modal').style.display = 'flex';
+            // 숫자 올라가는 연출
+            const t0 = performance.now();
+            (function tick(t) {
+                const k = Math.min(1, (t - t0) / 900);
+                rows.querySelectorAll('.st-pt').forEach(el => { el.innerText = '+' + Math.round(+el.dataset.to * (1 - Math.pow(1 - k, 3))); });
+                if (k < 1) requestAnimationFrame(tick);
+            })(t0);
+            try { fxStart(); const c = document.querySelector('#settle-modal .st-card').getBoundingClientRect(); fxBurst(c.left + c.width / 2, c.top + 60, 50, true, 520); } catch (e) {}
+        }
+        function closeSettlement() {
+            document.getElementById('settle-modal').style.display = 'none';
+            try { fxStopAmbient(); } catch (e) {}
+            roundNo++;
+            updateTurnUI();
+            players.forEach((_, i) => updatePlayerPosition(i));
+        }
+
         function nextTurn() {
             if (bonusRolls > 0) {
                 bonusRolls--;
@@ -2553,6 +2626,7 @@
             turnIndex = (turnIndex + 1) % turnOrder.length;
             updateTurnUI();
             players.forEach((_, i) => updatePlayerPosition(i));
+            if (turnIndex === 0) showSettlement(); // 6팀이 모두 한 바퀴 돌았으면 정산
         }
 
         function updateTurnUI() {
