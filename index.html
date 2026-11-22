@@ -597,6 +597,24 @@
         .bvs-vs { font-size:clamp(26px,5vw,38px); font-weight:900; font-style:italic; color:#b91c1c; text-shadow:0 0 10px rgba(255,180,60,.7); animation: vsPop .5s cubic-bezier(.3,1.8,.5,1) .3s both; }
         @keyframes vsPop { from { transform:scale(0) rotate(-20deg) } to { transform:scale(1) rotate(0) } }
 
+        /* 세력 현황 그래프 */
+        .card-counter-center { width: min(46%, 440px); padding: 12px 18px 10px !important; text-align:left !important; font-family:'Noto Serif KR',serif; }
+        .pw-title { font-size:17px; font-weight:900; color:#4a3010; text-align:center; letter-spacing:.12em; margin-bottom:8px; }
+        .pw-title small { font-size:12px; font-weight:700; color:#8a6a2a; letter-spacing:.05em; margin-left:6px; }
+        .pw-rows { display:grid; gap:6px; }
+        .pw-row { display:flex; align-items:center; gap:8px; }
+        .pw-nm { width:54px; font-weight:900; font-size:16px; }
+        .pw-track { flex:1; height:24px; border-radius:6px; background:rgba(60,40,10,.12); box-shadow: inset 0 1px 3px rgba(0,0,0,.25); overflow:hidden; }
+        .pw-bar { height:100%; width:0; border-radius:6px; transition: width .8s cubic-bezier(.2,.9,.3,1); background:linear-gradient(180deg, var(--c1), var(--c2)); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+        .pw-n { width:34px; text-align:right; font-size:26px; font-weight:900; line-height:1; }
+        .pw-row.n-koguryo { --c1:#4f86f0; --c2:#1e3a8a; color:#1e3a8a; } .pw-row.n-baekje { --c1:#e0584d; --c2:#8b1a1a; color:#8b1a1a; } .pw-row.n-silla { --c1:#3fb577; --c2:#14532d; color:#14532d; }
+        .pw-row.lead .pw-bar { animation: pwShine 1.6s ease-in-out infinite; } @keyframes pwShine { 50% { filter:brightness(1.25) } }
+        .pw-stack { display:flex; height:10px; margin:9px 0 6px; border-radius:5px; overflow:hidden; background:#cfc3a3; }
+        .pw-stack i { display:block; height:100%; width:0; transition: width .8s cubic-bezier(.2,.9,.3,1); }
+        .pw-stack .k { background:#2f63d6 } .pw-stack .b { background:#c9382f } .pw-stack .s { background:#2f9a5e } .pw-stack .e { background:transparent; flex:1 }
+        .pw-foot { display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:#5c4524; }
+        .pw-foot b { font-size:17px; font-weight:900; color:#4a3010; }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -618,22 +636,22 @@
             <div class="score-card" style="color:#1e3a8a;">
                 <span data-emblem="koguryo" data-size="58"></span>
                 <div>
-                    <div><span class="nm-hj">고구려</span><span class="nm-ko">高句麗 · 靑</span></div>
-                    <div class="st3"><div><small>영토</small><b id="land-koguryo">2</b></div><div class="sc"><small>점수</small><b id="score-koguryo">0</b></div><div><small>인물카드</small><b id="cards-koguryo">0</b></div></div>
+                    <div><span class="nm-hj">고구려</span></div>
+                    <div class="st3"><div class="sc"><small>점수</small><b id="score-koguryo">0</b></div><div><small>인물카드</small><b id="cards-koguryo">0</b></div></div>
                 </div>
             </div>
             <div class="score-card" style="color:#8b1a1a;">
                 <span data-emblem="baekje" data-size="58"></span>
                 <div>
-                    <div><span class="nm-hj">백제</span><span class="nm-ko">百濟 · 赤</span></div>
-                    <div class="st3"><div><small>영토</small><b id="land-baekje">2</b></div><div class="sc"><small>점수</small><b id="score-baekje">0</b></div><div><small>인물카드</small><b id="cards-baekje">0</b></div></div>
+                    <div><span class="nm-hj">백제</span></div>
+                    <div class="st3"><div class="sc"><small>점수</small><b id="score-baekje">0</b></div><div><small>인물카드</small><b id="cards-baekje">0</b></div></div>
                 </div>
             </div>
             <div class="score-card" style="color:#14532d;">
                 <span data-emblem="silla" data-size="58"></span>
                 <div>
-                    <div><span class="nm-hj">신라</span><span class="nm-ko">新羅 · 綠</span></div>
-                    <div class="st3"><div><small>영토</small><b id="land-silla">2</b></div><div class="sc"><small>점수</small><b id="score-silla">0</b></div><div><small>인물카드</small><b id="cards-silla">0</b></div></div>
+                    <div><span class="nm-hj">신라</span></div>
+                    <div class="st3"><div class="sc"><small>점수</small><b id="score-silla">0</b></div><div><small>인물카드</small><b id="cards-silla">0</b></div></div>
                 </div>
             </div>
         </div>
@@ -643,8 +661,14 @@
     <div class="board-wrapper">
         <div id="map-bg" class="map-bg"></div>
         <div class="card-counter-center">
-            <p class="text-xs font-bold text-amber-900 mb-1">남은 인물 카드</p>
-            <p id="remaining-cards" class="text-3xl font-black text-amber-900">21</p>
+            <div class="pw-title">세력 현황 <small>영토 수</small></div>
+            <div class="pw-rows">
+                <div class="pw-row n-koguryo"><span class="pw-nm">고구려</span><div class="pw-track"><div class="pw-bar" id="pw-bar-koguryo"></div></div><b class="pw-n" id="pw-n-koguryo">2</b></div>
+                <div class="pw-row n-baekje"><span class="pw-nm">백제</span><div class="pw-track"><div class="pw-bar" id="pw-bar-baekje"></div></div><b class="pw-n" id="pw-n-baekje">2</b></div>
+                <div class="pw-row n-silla"><span class="pw-nm">신라</span><div class="pw-track"><div class="pw-bar" id="pw-bar-silla"></div></div><b class="pw-n" id="pw-n-silla">2</b></div>
+            </div>
+            <div class="pw-stack" id="pw-stack"><i class="k"></i><i class="b"></i><i class="s"></i><i class="e"></i></div>
+            <div class="pw-foot"><span id="pw-lead">&nbsp;</span><span>남은 인물 카드 <b id="remaining-cards">21</b>장</span></div>
         </div>
         <div id="game-board" class="board-container"></div>
     </div>
@@ -654,7 +678,7 @@
         <div class="flex items-center gap-4">
             <div id="current-turn-indicator" class="turn-token"></div>
             <div>
-                <p class="text-xs text-slate-600 font-bold">現在 차례</p>
+                <p class="text-xs text-slate-600 font-bold">현재 차례</p>
                 <p id="turn-name" class="text-lg font-black"></p>
             </div>
         </div>
@@ -665,7 +689,7 @@
                     <div class="dice-face f4">四</div><div class="dice-face f5">五</div><div class="dice-face f6">六</div>
                 </div>
             </div>
-            <span class="dice-cap">擲 骰 <span id="dice-result" style="color:#fff4c2">·</span></span>
+            <span class="dice-cap"><span id="dice-result" style="color:#fff4c2">·</span></span>
             <span class="dice-sub">주사위 굴리기</span>
         </button>
     </div>
@@ -2437,9 +2461,23 @@
             if (hangangOwner) showRegionCard(HANGANG_POS, hangangOwner); else nextTurn();
         }
 
-        function updateScores() {
+        function updatePower() {
+            const total = regions.filter(r => !['아이템 뽑기', '인물 뽑기', '함정', '대멸망'].includes(r)).length;
+            const cnt = {}; let max = 0;
+            ['koguryo', 'baekje', 'silla'].forEach(n => { cnt[n] = nationLands[n].length; max = Math.max(max, cnt[n]); });
             ['koguryo', 'baekje', 'silla'].forEach(n => {
-                document.getElementById(`land-${n}`).innerText = nationLands[n].length;
+                document.getElementById('pw-n-' + n).innerText = cnt[n];
+                document.getElementById('pw-bar-' + n).style.width = Math.max(cnt[n] / total * 100, cnt[n] ? 4 : 0) + '%';
+                document.getElementById('pw-bar-' + n).closest('.pw-row').classList.toggle('lead', cnt[n] === max && max > 0 && Object.values(cnt).filter(v => v === max).length === 1);
+            });
+            const st = document.getElementById('pw-stack').children;
+            st[0].style.width = cnt.koguryo / total * 100 + '%'; st[1].style.width = cnt.baekje / total * 100 + '%'; st[2].style.width = cnt.silla / total * 100 + '%';
+            const leaders = ['koguryo', 'baekje', 'silla'].filter(n => cnt[n] === max);
+            document.getElementById('pw-lead').innerText = leaders.length === 1 ? `👑 ${nationNamesKo[leaders[0]]} 우세` : '⚖️ 팽팽한 접전';
+        }
+        function updateScores() {
+            updatePower();
+            ['koguryo', 'baekje', 'silla'].forEach(n => {
                 document.getElementById(`cards-${n}`).innerText = nationCards[n];
                 const scoreElem = document.getElementById(`score-${n}`);
                 if (scoreElem.innerText != scores[n]) {
