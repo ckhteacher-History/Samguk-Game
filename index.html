@@ -615,6 +615,41 @@
         .pw-foot { display:flex; justify-content:space-between; font-size:13px; font-weight:800; color:#5c4524; }
         .pw-foot b { font-size:17px; font-weight:900; color:#4a3010; }
 
+        /* 함정 팝업 */
+        #trap-modal { background: radial-gradient(ellipse at 50% 45%, rgba(70,0,0,.55), rgba(0,0,0,.92) 70%); overflow:hidden; }
+        .tp-vig { position:absolute; inset:0; pointer-events:none; box-shadow: inset 0 0 160px 50px rgba(120,0,0,.65); animation: tpBeat 1.8s ease-in-out infinite; }
+        @keyframes tpBeat { 0%,100%{ opacity:.55 } 50%{ opacity:1 } }
+        .tp-card { position:relative; z-index:3; width:min(92vw, 440px); padding:20px 24px 22px; text-align:center; font-family:'Noto Serif KR','Nanum Myeongjo',serif; color:#e8d9c4;
+            background: linear-gradient(180deg, #14090a, #080304); border:1px solid #5a1212; border-radius:2px;
+            box-shadow: 0 0 0 1px #000, 0 0 0 3px #3a0a0a, 0 0 0 4px #8b1a1a, 0 0 60px 8px rgba(160,10,10,.6), 0 30px 60px rgba(0,0,0,.8);
+            animation: tpIn .55s cubic-bezier(.2,1.4,.4,1), tpShake .5s ease-in-out .1s; }
+        @keyframes tpIn { 0%{ transform: scale(1.25); opacity:0; filter:blur(6px) } 100%{ transform: scale(1); opacity:1; filter:blur(0) } }
+        @keyframes tpShake { 0%,100%{ translate:0 0 } 20%{ translate:-7px 3px } 40%{ translate:6px -3px } 60%{ translate:-4px 2px } 80%{ translate:3px -1px } }
+        .tp-corner { position:absolute; width:16px; height:16px; border:2px solid #c0392b; }
+        .tp-corner.tl { left:6px; top:6px; border-right:0; border-bottom:0; } .tp-corner.tr { right:6px; top:6px; border-left:0; border-bottom:0; }
+        .tp-corner.bl { left:6px; bottom:6px; border-right:0; border-top:0; } .tp-corner.br { right:6px; bottom:6px; border-left:0; border-top:0; }
+        .tp-top { font-size:12px; letter-spacing:.7em; color:#b5483c; font-weight:700; padding-left:.7em; margin-bottom:10px; }
+        .tp-photo { position:relative; width:100%; aspect-ratio: 4/3; overflow:hidden; background:#050202; border:1px solid #5a1212; box-shadow: inset 0 0 40px #000; }
+        .tp-img { position:absolute; inset:0; background-size:cover; background-position:center; filter: saturate(.8) contrast(1.1); animation: tpZoom 8s ease-out forwards; }
+        @keyframes tpZoom { from{ transform:scale(1.15) } to{ transform:scale(1.02) } }
+        .tp-photo::after { content:''; position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.75)), linear-gradient(180deg, transparent 55%, rgba(60,0,0,.6)); }
+        .tp-ph { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background: radial-gradient(circle at 50% 45%, #3a0c0c, #080304 75%); }
+        .tp-ph b { font-size:120px; line-height:1; color:rgba(190,40,30,.55); font-weight:900; text-shadow:0 0 30px rgba(220,40,20,.6); animation: tpFlick 2.4s steps(1) infinite; }
+        @keyframes tpFlick { 0%,100%{ opacity:1 } 40%{ opacity:1 } 42%{ opacity:.55 } 44%{ opacity:1 } 80%{ opacity:.8 } 82%{ opacity:1 } }
+        .tp-photo.nophoto .tp-ph { display:flex; } .tp-photo.nophoto .tp-img { display:none; }
+        .tp-scan { position:absolute; inset:0; pointer-events:none; z-index:2; background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 3px); mix-blend-mode:multiply; }
+        .tp-title { margin:14px 0 0; font-size:clamp(2rem,9vw,2.7rem); font-weight:900; letter-spacing:.14em; padding-left:.14em; line-height:1.15; color:#ff4a36; text-shadow: 0 0 18px rgba(255,40,20,.7), 0 2px 0 #3a0000; animation: tpFlick 3s steps(1) infinite; }
+        .tp-rule { margin:8px auto; width:70%; display:flex; align-items:center; gap:10px; color:#8b1a1a; font-size:11px; }
+        .tp-rule::before, .tp-rule::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, #8b1a1a, transparent); }
+        .tp-desc { font-size:15px; line-height:1.75; color:#d7c3aa; font-weight:600; word-break:keep-all; }
+        .tp-desc em { font-style:normal; color:#ff8a78; font-weight:800; }
+        .tp-score { margin:12px 0 16px; display:flex; align-items:baseline; justify-content:center; gap:8px; }
+        .tp-score small { font-size:14px; font-weight:700; color:#a58a76; }
+        .tp-score b { font-size:54px; line-height:1; font-weight:900; color:#ff3b2a; text-shadow:0 0 22px rgba(255,40,20,.8); font-variant-numeric: tabular-nums; }
+        .tp-btn { width:100%; padding:13px 0; font-family:inherit; font-size:16px; font-weight:900; letter-spacing:.3em; cursor:pointer; color:#e8d9c4; background:linear-gradient(180deg,#3a0a0a,#1a0505); border:1px solid #8b1a1a; border-radius:2px; }
+        .tp-btn:hover { background:linear-gradient(180deg,#5a1010,#2a0808); color:#fff; }
+        @media (max-height:760px) { .tp-photo { aspect-ratio: 16/9; } .tp-ph b { font-size:80px; } .tp-score b { font-size:42px; } }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -937,11 +972,20 @@
     </div>
 
     <div id="trap-modal" class="modal">
-        <div class="bg-white p-8 rounded-3xl max-sm w-full mx-4 shadow-2xl border-4 border-red-600 text-center">
-            <div class="text-5xl mb-4">⚠️</div>
-            <h2 id="trap-title" class="text-2xl font-black text-red-600 mb-2">함정 발생!</h2>
-            <div id="trap-content" class="text-lg mb-6 leading-relaxed font-bold text-slate-800"></div>
-            <button onclick="closeTrapModal()" class="bg-red-600 text-white w-full py-4 rounded-xl font-black text-xl">운명에 따르겠습니다</button>
+        <div class="tp-vig"></div>
+        <div id="trap-card" class="tp-card">
+            <div class="tp-corner tl"></div><div class="tp-corner tr"></div><div class="tp-corner bl"></div><div class="tp-corner br"></div>
+            <div class="tp-top"><span>天 災 人 禍</span></div>
+            <div id="tp-photo" class="tp-photo">
+                <div id="tp-img" class="tp-img"></div>
+                <div id="tp-ph" class="tp-ph"><b id="tp-glyph">亂</b></div>
+                <div class="tp-scan"></div>
+            </div>
+            <h2 id="trap-title" class="tp-title">농민 반란</h2>
+            <div class="tp-rule"><span>✦</span></div>
+            <div id="trap-content" class="tp-desc"></div>
+            <div class="tp-score"><small id="tp-nation">백제</small><b id="tp-pt">-100</b><small>점</small></div>
+            <button onclick="closeTrapModal()" class="tp-btn">운명을 받아들인다</button>
         </div>
     </div>
 
@@ -1575,57 +1619,36 @@
             nextTurn();
         }
 
-        function handleTrap(nation) {
+        function handleTrap(nation, force) {
             const traps = [
-                { name: "농민 반란", msg: "농민 반란 발생!", score: -100 },
-                { name: "흉년 발생", msg: "흉년으로 식량난 발생!", score: -80 },
-                { name: "대홍수 발생", msg: "대홍수 발생!", score: -80 },
-                { name: "전염병 발생", msg: "전염병 창궐!", score: -120 }
+                { name: "농민 반란", file: "농민반란", glyph: "亂", msg: "굶주린 백성들이 들고일어났습니다.", score: -100 },
+                { name: "흉년", file: "흉년", glyph: "凶", msg: "논밭이 말라붙어 곡식이 자라지 않습니다.", score: -80 },
+                { name: "대홍수", file: "대홍수", glyph: "洪", msg: "장맛비에 강이 넘쳐 마을이 물에 잠겼습니다.", score: -80 },
+                { name: "전염병", file: "전염병", glyph: "疫", msg: "알 수 없는 병이 번지며 백성이 쓰러지고 있습니다.", score: -120 }
             ];
-            const selected = traps[Math.floor(Math.random() * traps.length)];
+            const selected = force !== undefined ? traps[force] : traps[Math.floor(Math.random() * traps.length)];
             scores[nation] += selected.score;
             updateScores();
 
-            const modal = document.getElementById('trap-modal');
-            const title = document.getElementById('trap-title');
-            const content = document.getElementById('trap-content');
-            
-            title.innerText = `[${selected.name}] 발생!`;
-            content.innerHTML = `<span class="text-blue-600">${nationNamesKo[nation]}</span>에 큰 시련이 닥쳤습니다.<br><br><span class="text-2xl text-red-600">${selected.msg}</span><br><br><span class="text-red-500">(${selected.score}점)</span>`;
-            
-            modal.style.display = 'flex';
-        }
-
-        function handleDoom() {
-            // 모든 영토·점수 초기화 (단, 각 나라의 수도는 그대로 유지)
-            nationLands.koguryo = [capitals.koguryo];
-            nationLands.baekje = [capitals.baekje];
-            nationLands.silla = [capitals.silla];
-            hangangOwner = null; // 한강 유역도 주인 없는 땅으로 되돌림
-            scores.koguryo = 0; scores.baekje = 0; scores.silla = 0;
-            applyLandColors();
-            updateScores();
-            document.getElementById('dm-caps').innerHTML = '유지되는 수도 · ' + ['koguryo', 'baekje', 'silla'].map(n => `${nationNamesKo[n]} <em>${regions[capitals[n]]}</em>`).join(' · ');
-            // 불씨 효과
-            const box = document.getElementById('doom-embers'); box.innerHTML = '';
-            for (let i = 0; i < 70; i++) {
-                const e = document.createElement('div'); e.className = 'dm-ember';
-                const sz = 3 + Math.random() * 7;
-                e.style.cssText = `left:${Math.random() * 100}%; width:${sz}px; height:${sz}px; --dx:${(Math.random() - .5) * 160}px; animation-duration:${3 + Math.random() * 4}s; animation-delay:${Math.random() * 3}s; animation-iteration-count:infinite;`;
-                box.appendChild(e);
-            }
-            const card = document.querySelector('#doom-modal .dm-card');
+            document.getElementById('trap-title').innerText = selected.name;
+            document.getElementById('trap-content').innerHTML = `<em>${nationNamesKo[nation]}</em>에 큰 시련이 닥쳤습니다.<br>${selected.msg}`;
+            document.getElementById('tp-nation').innerText = nationNamesKo[nation];
+            document.getElementById('tp-pt').innerText = selected.score;
+            document.getElementById('tp-glyph').innerText = selected.glyph;
+            // 그림: images/traps/농민반란.(jpg|png|webp) · 흉년 · 대홍수 · 전염병
+            const photo = document.getElementById('tp-photo'), img = document.getElementById('tp-img');
+            photo.classList.add('nophoto'); img.style.backgroundImage = 'none';
+            const base = 'images/traps/' + encodeURIComponent(selected.file), exts = ['jpg', 'jpeg', 'png', 'webp'];
+            (function next(i) {
+                if (i >= exts.length) return;
+                const u = `${base}.${exts[i]}`, t = new Image();
+                t.onload = () => { img.style.backgroundImage = `url('${u}')`; photo.classList.remove('nophoto'); };
+                t.onerror = () => next(i + 1);
+                t.src = u;
+            })(0);
+            const card = document.getElementById('trap-card');
             card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
-            const fl = document.querySelector('#doom-modal .dm-flash'); fl.style.animation = 'none'; void fl.offsetWidth; fl.style.animation = '';
-            document.body.classList.remove('dm-quake'); void document.body.offsetWidth; document.body.classList.add('dm-quake');
-            setTimeout(() => document.body.classList.remove('dm-quake'), 1300);
-            document.getElementById('doom-modal').style.display = 'flex';
-        }
-
-        function closeDoomModal() {
-            document.getElementById('doom-modal').style.display = 'none';
-            document.getElementById('doom-embers').innerHTML = '';
-            nextTurn();
+            document.getElementById('trap-modal').style.display = 'flex';
         }
 
         function closeTrapModal() {
