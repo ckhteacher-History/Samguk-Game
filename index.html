@@ -505,6 +505,14 @@
         .rg-btn:hover { background:#3d2a12; }
         @media (max-height: 760px) { .rg-photo { max-height:40vh; } .rg-desc { font-size:13.5px; line-height:1.65; } .rg-info { padding:12px 22px 16px; } }
 
+        /* 가위바위보 */
+        .rps-hand { font-size:110px; line-height:1.15; margin:4px 0 0; filter: drop-shadow(0 6px 8px rgba(0,0,0,.25)); }
+        .rps-hand.spin { animation: rpsShake .18s ease-in-out infinite; }
+        .rps-hand.land { animation: rpsLand .6s cubic-bezier(.2,1.6,.4,1); }
+        @keyframes rpsShake { 0%,100%{ transform: translateY(0) rotate(-6deg) } 50%{ transform: translateY(-10px) rotate(6deg) } }
+        @keyframes rpsLand { 0%{ transform: scale(.4) } 100%{ transform: scale(1) } }
+        .rps-name { font-size:26px; font-weight:900; color:#6b21a8; min-height:36px; margin-bottom:14px; }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -635,17 +643,16 @@
     <!-- 가위바위보 모달 -->
     <div id="rps-modal" class="modal">
         <div class="bg-white p-8 rounded-3xl max-w-lg w-full mx-4 shadow-2xl border-4 border-purple-500 text-center">
-            <div class="text-5xl mb-3">✂️🪨📄</div>
-            <h2 class="text-2xl font-black text-purple-700 mb-1">교사와 가위바위보!</h2>
-            <p id="rps-region" class="bg-purple-100 inline-block px-4 py-1 rounded-full text-sm font-bold text-purple-700 mb-6"></p>
-            <p class="text-slate-600 font-bold mb-6">선생님과 가위바위보를 해서<br>이기면 영토를 점령합니다!</p>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="rpsResult(true)" class="bg-purple-500 hover:bg-purple-600 active:scale-95 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-lg">
-                    🏆 승리
-                </button>
-                <button onclick="rpsResult(false)" class="bg-slate-400 hover:bg-slate-500 active:scale-95 text-white py-6 rounded-2xl font-black text-2xl transition-all shadow-lg">
-                    💀 패배
-                </button>
+            <h2 class="text-2xl font-black text-purple-700 mb-1">컴퓨터와 가위바위보!</h2>
+            <p id="rps-region" class="bg-purple-100 inline-block px-4 py-1 rounded-full text-sm font-bold text-purple-700 mb-3"></p>
+            <p id="rps-guide" class="text-slate-600 font-bold mb-3">학생에게 무엇을 낼지 물어본 뒤<br>아래 버튼을 눌러 컴퓨터의 선택을 확인하세요!</p>
+            <div id="rps-hand" class="rps-hand">❔</div>
+            <div id="rps-name" class="rps-name">&nbsp;</div>
+            <button id="rps-go" onclick="rpsSpin()" class="bg-purple-600 hover:bg-purple-700 active:scale-95 text-white w-full py-5 rounded-2xl font-black text-2xl transition-all shadow-lg">✊✌️✋ 가위바위보!</button>
+            <div id="rps-judge" class="hidden grid grid-cols-3 gap-3">
+                <button onclick="rpsResult(true)" class="bg-purple-500 hover:bg-purple-600 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg">🏆 승리</button>
+                <button onclick="rpsResult(false)" class="bg-slate-500 hover:bg-slate-600 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg">💀 패배</button>
+                <button onclick="rpsAgain()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-white py-5 rounded-2xl font-black text-xl transition-all shadow-lg">🔄 다시</button>
             </div>
         </div>
     </div>
@@ -1566,9 +1573,43 @@
             } else {
                 // 가위바위보 모달
                 document.getElementById('rps-region').innerText = regions[pos];
+                rpsReset();
                 document.getElementById('rps-modal').style.display = 'flex';
             }
         }
+
+        const RPS = [{ e: '✊', n: '바위' }, { e: '✌️', n: '가위' }, { e: '✋', n: '보' }];
+        let rpsBusy = false;
+        function rpsReset() {
+            rpsBusy = false;
+            const h = document.getElementById('rps-hand'); h.className = 'rps-hand'; h.innerText = '❔';
+            document.getElementById('rps-name').innerHTML = '&nbsp;';
+            document.getElementById('rps-go').style.display = '';
+            document.getElementById('rps-judge').classList.add('hidden');
+            document.getElementById('rps-guide').innerHTML = '학생에게 무엇을 낼지 물어본 뒤<br>아래 버튼을 눌러 컴퓨터의 선택을 확인하세요!';
+        }
+        function rpsSpin() {
+            if (rpsBusy) return; rpsBusy = true;
+            const h = document.getElementById('rps-hand'), nm = document.getElementById('rps-name');
+            document.getElementById('rps-go').style.display = 'none';
+            nm.innerHTML = '&nbsp;'; h.className = 'rps-hand spin';
+            const pick = Math.floor(Math.random() * 3);
+            let i = Math.floor(Math.random() * 3), delay = 70, n = 0;
+            const total = 16 + Math.floor(Math.random() * 3);
+            (function tick() {
+                if (n >= total && i % 3 === pick) {
+                    h.className = 'rps-hand land'; h.innerText = RPS[pick].e; nm.innerText = RPS[pick].n + '!';
+                    document.getElementById('rps-guide').innerHTML = '컴퓨터는 <b>' + RPS[pick].n + '</b>를 냈습니다!<br>학생의 선택과 비교해 결과를 눌러 주세요.';
+                    document.getElementById('rps-judge').classList.remove('hidden');
+                    rpsBusy = false; return;
+                }
+                i = (i + 1) % 3; n++;
+                h.innerText = RPS[i].e;
+                if (n > total - 8) delay += 40;
+                setTimeout(tick, delay);
+            })();
+        }
+        function rpsAgain() { rpsReset(); }
 
         function rpsResult(win) {
             document.getElementById('rps-modal').style.display = 'none';
