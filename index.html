@@ -1260,8 +1260,8 @@
                     showHangangClaim(nation);
                 } else if (hangangOwner === nation) {
                     // 내 땅: 보급품
-                    scores[nation] += 20;
-                    showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+20점)");
+                    scores[nation] += 30;
+                    showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+30점)");
                     updateScores();
                 } else {
                     // 다른 나라 점령지: 무조건 전투 (50:50)
@@ -1278,8 +1278,8 @@
             }
 
             if (nationLands[nation].includes(pos)) { 
-                scores[nation] += 20;
-                showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+20점)");
+                scores[nation] += 30;
+                showBattleResultPopup("아군 영토에서 보급품을 받았습니다!", "(+30점)");
                 updateScores(); return; 
             }
 
@@ -1419,7 +1419,7 @@
 
             setTimeout(() => {
                 const currentNation = players[turnOrder[turnIndex]].nation;
-                if (!special) { scores[currentNation] += 30; updateScores(); }
+                if (!special) { scores[currentNation] += rare ? 100 : 30; updateScores(); }
                 document.getElementById('item-modal').style.display = 'none';
                 showItemResult(item, rare || special);
                 box.className = '';
@@ -1436,7 +1436,7 @@
             const bonus = document.getElementById('item-bonus');
             if (item.special === 'gaema') bonus.innerText = '이번 차례에 주사위를 2번 더 던질 수 있습니다!';
             else if (item.special === 'invincible') bonus.innerText = '공격할 나라를 골라 그 나라의 점수를 -100점 깎습니다!';
-            else bonus.innerText = '+30점 보너스 획득!';
+            else bonus.innerText = rare ? '+100점 보너스 획득!' : '+30점 보너스 획득!';
             pendingSpecial = item.special || null;
             document.getElementById('item-nat-badge').style.display = 'none';
             document.getElementById('item-desc').innerText = item.desc;
@@ -1493,10 +1493,10 @@
 
         function handleTrap(nation) {
             const traps = [
-                { name: "농민 반란", msg: "농민 반란 발생!", score: -200 },
-                { name: "흉년 발생", msg: "흉년으로 식량난 발생!", score: -150 },
-                { name: "대홍수 발생", msg: "대홍수 발생!", score: -150 },
-                { name: "전염병 발생", msg: "전염병 창궐!", score: -250 }
+                { name: "농민 반란", msg: "농민 반란 발생!", score: -100 },
+                { name: "흉년 발생", msg: "흉년으로 식량난 발생!", score: -80 },
+                { name: "대홍수 발생", msg: "대홍수 발생!", score: -80 },
+                { name: "전염병 발생", msg: "전염병 창궐!", score: -120 }
             ];
             const selected = traps[Math.floor(Math.random() * traps.length)];
             scores[nation] += selected.score;
@@ -1739,7 +1739,7 @@
                 document.getElementById('defender-prob-label').innerText = `수비 성공 70%`;
                 document.getElementById('attacker-prob-bar').style.width = '30%';
                 document.getElementById('defender-prob-bar').style.width = '70%';
-                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +100점 / 수비 성공 시 +20점';
+                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +100점 (수비측 -50점) / 수비 성공 시 +20점';
             } else if (isHangang) {
                 document.getElementById('battle-modal-title').innerHTML = '🌊 한강 유역 쟁탈전! 🌊';
                 document.getElementById('battle-modal-subtitle').innerHTML = `<span class="text-blue-600 font-black">한반도의 요충지</span>를 두고 전투가 벌어집니다!`;
@@ -1748,7 +1748,7 @@
                 document.getElementById('defender-prob-label').innerText = `수비 성공 50%`;
                 document.getElementById('attacker-prob-bar').style.width = '50%';
                 document.getElementById('defender-prob-bar').style.width = '50%';
-                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +200점 / 수비 실패 시 -200점';
+                document.getElementById('battle-score-desc').innerText = '* 공격 성공 시 +150점 / 수비 실패 시 -150점';
             } else {
                 document.getElementById('battle-modal-title').innerHTML = '⚔️ 전투 발생! ⚔️';
                 document.getElementById('battle-modal-subtitle').innerHTML = '';
@@ -2206,9 +2206,9 @@
             if (win) {
                 if (isHangang) {
                     statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 한강 유역 쟁탈에 성공했습니다!`;
-                    scoreDetail = `(${nationNamesKo[att.nation]} +200점, ${nationNamesKo[defNation]} -200점)`;
-                    scores[att.nation] += 200;
-                    scores[defNation] -= 200;
+                    scoreDetail = `(${nationNamesKo[att.nation]} +150점, ${nationNamesKo[defNation]} -150점)`;
+                    scores[att.nation] += 150;
+                    scores[defNation] -= 150;
                     hangangOwner = att.nation;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
@@ -2218,8 +2218,9 @@
                 } else if (isCapital) {
                     const attackScore = 100;
                     statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 수도 점령에 성공했습니다!`;
-                    scoreDetail = `(${nationNamesKo[att.nation]} +${attackScore}점)`;
+                    scoreDetail = `(${nationNamesKo[att.nation]} +${attackScore}점, ${nationNamesKo[defNation]} -50점)`;
                     scores[att.nation] += attackScore;
+                    scores[defNation] -= 50;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
                     { const rn = regions[pos]; pendingCapture = { pos, nation: att.nation, msg: `${nationNamesKo[att.nation]}가 ${nationNamesKo[defNation]}의 수도 ${rn}${josa(rn, '을', '를')} 점령했습니다!`, detail: scoreDetail }; }
