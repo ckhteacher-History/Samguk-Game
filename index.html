@@ -2291,7 +2291,7 @@
 
         function closeHangangModal() {
             document.getElementById('hangang-modal').style.display = 'none';
-            nextTurn();
+            if (hangangOwner) showRegionCard(HANGANG_POS, hangangOwner); else nextTurn();
         }
 
         function updateScores() {
