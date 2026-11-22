@@ -464,6 +464,47 @@
         .cc-btn:hover { background:#3d2a12; }
         @media (max-width: 640px) { .char-card { flex-direction:column; align-items:center; } .cc-photo { height:42vh; } .cc-info { padding:16px 20px; } .cc-desc { font-size:13px; margin-bottom:10px; } }
 
+        /* 지역 점령 연출 */
+        #region-modal { overflow:hidden; --nc:#2f5fb3; --nc2:#8db4ff; }
+        #region-modal.n-baekje { --nc:#b3322f; --nc2:#ff9a8d; }
+        #region-modal.n-silla { --nc:#2f8a55; --nc2:#9be3b4; }
+        #region-modal .r-rays { position:absolute; left:50%; top:50%; width:1600px; height:1600px; margin:-800px 0 0 -800px; pointer-events:none; opacity:.55;
+            background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--nc2) 55%, transparent) 0deg 4deg, transparent 4deg 18deg);
+            -webkit-mask-image: radial-gradient(circle, #000 6%, transparent 60%); mask-image: radial-gradient(circle, #000 6%, transparent 60%); animation: spinRays 30s linear infinite; }
+        .region-card { position:relative; z-index:3; width:min(94vw, 720px); max-height:94vh; overflow:hidden; border-radius:16px; font-family:'Noto Serif KR','Nanum Myeongjo',serif;
+            background: linear-gradient(170deg, #fbf4e2, #efe0bb); border:1px solid #1b1510;
+            box-shadow: 0 0 0 3px var(--nc), 0 0 0 5px #e8c76a, 0 0 46px 10px color-mix(in srgb, var(--nc2) 55%, transparent), 0 30px 60px rgba(0,0,0,.6);
+            animation: rgIn .8s cubic-bezier(.2,1.15,.35,1); }
+        @keyframes rgIn { 0%{ transform: scale(.6) translateY(40px); opacity:0 } 60%{ opacity:1 } 100%{ transform: scale(1) translateY(0) } }
+        .rg-photo { position:relative; width:100%; aspect-ratio: 16/9; max-height:50vh; overflow:hidden; background:#14100b; }
+        .rg-img { position:absolute; inset:0; background-size:cover; background-position:center; animation: kenburns 9s ease-out forwards; }
+        @keyframes kenburns { from { transform: scale(1.18) } to { transform: scale(1.02) } }
+        .rg-fallback { position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+            background: radial-gradient(circle at 50% 45%, var(--nc), #14100b 85%); color:#f1d98a; }
+        .rg-fallback svg { width:110px; height:110px; fill:none; stroke:currentColor; stroke-width:.9; stroke-linecap:round; stroke-linejoin:round; filter: drop-shadow(0 0 12px rgba(255,220,120,.6)); }
+        .rg-photo.nophoto .rg-fallback { display:flex; } .rg-photo.nophoto .rg-img { display:none; }
+        .rg-vig { position:absolute; inset:0; pointer-events:none; background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.55)), linear-gradient(180deg, transparent 60%, rgba(0,0,0,.55)); }
+        .rg-shine { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
+        .rg-shine::after { content:''; position:absolute; top:-20%; bottom:-20%; width:30%; left:-50%; transform:skewX(-18deg);
+            background: linear-gradient(110deg, transparent, rgba(255,255,255,.65), transparent); animation: shineSweep 1.5s ease-out .6s 1 forwards; }
+        .rg-banner { position:absolute; left:0; bottom:14px; padding:6px 22px 6px 18px; color:#fff; font-weight:900; font-size:clamp(15px,3.4vw,20px); letter-spacing:.18em;
+            background: linear-gradient(90deg, var(--nc), color-mix(in srgb, var(--nc) 70%, transparent)); border-top:1px solid #e8c76a; border-bottom:1px solid #e8c76a;
+            clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%); animation: bannerIn .6s cubic-bezier(.2,1,.3,1) .5s both; }
+        @keyframes bannerIn { from { transform: translateX(-110%) } to { transform: translateX(0) } }
+        .rg-stamp { position:absolute; right:16px; top:14px; width:62px; height:62px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+            background: var(--nc); color:#f6e3a1; font-size:32px; font-weight:900; border:3px double #e8c76a; box-shadow: 0 0 0 2px #1b1510, 0 6px 14px rgba(0,0,0,.5);
+            animation: stampIn .5s cubic-bezier(.3,1.6,.5,1) 1.0s both; }
+        @keyframes stampIn { 0%{ transform: scale(3) rotate(-25deg); opacity:0 } 100%{ transform: scale(1) rotate(-8deg); opacity:1 } }
+        .rg-info { padding:18px 28px 22px; text-align:center; }
+        .rg-hanja { font-size:14px; letter-spacing:.45em; color:#8a6a2a; font-weight:700; }
+        .rg-name { margin:2px 0 0; font-size:clamp(2rem,6vw,2.8rem); font-weight:900; color:#2b1d0e; letter-spacing:.06em; line-height:1.15; }
+        .rg-rule { width:70%; margin:8px auto 10px; display:flex; align-items:center; gap:10px; color:#b88a2a; font-size:12px; }
+        .rg-rule::before, .rg-rule::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, #b88a2a, transparent); }
+        .rg-desc { font-size:15px; line-height:1.8; color:#3d2d18; font-weight:600; word-break:keep-all; margin:0 0 14px; text-align:left; }
+        .rg-btn { width:100%; padding:12px 0; border-radius:10px; background:#2b1d0e; color:#f1d98a; border:1px solid #c9a24a; font-weight:900; font-size:18px; letter-spacing:.3em; cursor:pointer; font-family:inherit; }
+        .rg-btn:hover { background:#3d2a12; }
+        @media (max-height: 760px) { .rg-photo { max-height:40vh; } .rg-desc { font-size:13.5px; line-height:1.65; } .rg-info { padding:12px 22px 16px; } }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -732,6 +773,28 @@
             <h2 class="text-2xl font-black mb-4">⚔️ 결과 알림 ⚔️</h2>
             <div id="battle-result-content" class="text-lg mb-6 leading-relaxed"></div>
             <button onclick="closeBattleResult()" class="bg-slate-800 text-white w-full py-4 rounded-xl font-black text-xl">확인</button>
+        </div>
+    </div>
+
+    <!-- 지역 점령 연출 -->
+    <div id="region-modal" class="modal">
+        <div class="r-rays"></div>
+        <div id="region-card" class="region-card">
+            <div class="rg-photo">
+                <div id="rg-img" class="rg-img"></div>
+                <div id="rg-fallback" class="rg-fallback"><span id="rg-icon"></span></div>
+                <div class="rg-vig"></div>
+                <div class="rg-shine"></div>
+                <div id="rg-stamp" class="rg-stamp"><span id="rg-stamp-ch">高</span></div>
+                <div id="rg-banner" class="rg-banner">고구려 점령</div>
+            </div>
+            <div class="rg-info">
+                <div id="rg-hanja" class="rg-hanja">國內城</div>
+                <h2 id="rg-name" class="rg-name">국내성</h2>
+                <div class="rg-rule"><span>❖</span></div>
+                <p id="rg-desc" class="rg-desc"></p>
+                <button onclick="closeRegionCard()" class="rg-btn">확인</button>
+            </div>
         </div>
     </div>
 
@@ -1551,6 +1614,7 @@
                 if (idx > -1) nationLands[n].splice(idx, 1);
             }
             nationLands[myNation].push(pos);
+            pendingCapture = { pos, nation: myNation };
             applyLandColors();
             updateScores();
             showBattleResultPopup(statusMsg, scoreDetail);
@@ -2057,6 +2121,7 @@
                     scores[att.nation] += attackScore;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
+                    pendingCapture = { pos, nation: att.nation };
                     applyLandColors();
                 } else {
                     statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 공격에 성공했습니다!`;
@@ -2065,6 +2130,7 @@
                     scores[defNation] -= 50;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
+                    pendingCapture = { pos, nation: att.nation };
                     applyLandColors();
                 }
             } else {
@@ -2089,6 +2155,71 @@
             showBattleResultPopup(statusMsg, scoreDetail);
         }
 
+        // ===== 지역 점령 연출 =====
+        const REGION_INFO = {
+            "국내성": "고구려의 두 번째 도읍입니다. 유리왕이 3년(서기 3년)에 졸본에서 옮겨 왔고, 427년 장수왕이 평양으로 천도할 때까지 약 400년간 수도였습니다. 압록강 가의 요새도시로, 인근에 광개토대왕릉비와 장군총이 남아 있습니다.",
+            "안시성": "645년 당 태종이 이끄는 대군이 몰려왔을 때, 안시성 사람들이 88일 동안 성을 지켜내 끝내 당군을 물리친 곳입니다. 고구려 방어 전략의 상징입니다.",
+            "요동성": "고구려 서쪽의 가장 큰 요충지입니다. 수나라와 당나라가 쳐들어올 때마다 가장 치열한 전투가 벌어졌던 곳으로, 고구려가 중국 세력의 침략을 막는 최전선이었습니다.",
+            "평양성": "427년 장수왕이 국내성에서 옮겨 온 고구려의 수도입니다. 남쪽으로 영토를 넓히는 남진 정책의 중심이었으며, 668년 나당 연합군에 함락되며 고구려가 멸망했습니다.",
+            "졸본성": "기원전 37년 주몽이 고구려를 세우고 첫 도읍으로 삼은 곳입니다. 험준한 산에 둘러싸여 방어에 유리했던 고구려의 출발점입니다.",
+            "압록강": "고구려의 서쪽 국경을 이루던 큰 강입니다. 국내성이 이 강가에 자리해 교통과 방어의 중심이 되었고, 수·당과의 전쟁 때에도 중요한 방어선이 되었습니다.",
+            "위례성": "기원전 18년 온조가 한강 유역에 백제를 세우고 처음 도읍한 곳입니다. 한강을 끼고 있어 농사와 교통에 유리했고, 이후 백제는 이곳을 기반으로 성장했습니다.",
+            "웅진성": "475년 고구려 장수왕이 한성을 함락하자 문주왕이 도읍을 옮긴 곳으로, 지금의 충남 공주입니다. 금강과 산이 감싸는 천연 요새로, 무령왕이 이곳에서 백제를 다시 일으켰습니다.",
+            "사비성": "538년 성왕이 웅진에서 옮겨 온 백제의 마지막 수도로, 지금의 충남 부여입니다. 백제 문화가 가장 화려하게 꽃핀 곳이며, 660년 나당 연합군의 공격으로 함락되었습니다.",
+            "황산벌": "660년 계백 장군이 이끄는 5천 결사대가 김유신의 신라군 5만 명에 맞서 싸운 전투가 벌어진 들판입니다. 계백은 네 번을 이겼지만 끝내 패해 전사했고, 곧 백제는 멸망했습니다.",
+            "백마강": "사비성(부여)을 감싸고 흐르는 금강 하류의 이름입니다. 백제 멸망 때 궁녀들이 몸을 던졌다고 전해지는 낙화암이 이 강가의 절벽입니다.",
+            "경주": "신라 천 년의 수도로, 옛 이름은 서라벌입니다. 첨성대, 대릉원, 월정교 등 화려한 신라 문화유산이 도시 곳곳에 남아 있어 '지붕 없는 박물관'이라 불립니다.",
+            "불국사": "751년 김대성이 짓기 시작한 신라의 대표 사찰입니다. 부처님의 나라를 땅 위에 표현했으며, 다보탑과 석가탑이 있습니다. 유네스코 세계유산으로 등재되어 있습니다.",
+            "석굴암": "불국사와 함께 김대성이 만든 인공 석굴 사원입니다. 화강암을 정교하게 쌓아 만든 돔 천장과 본존불은 신라 불교 조각의 최고 걸작으로 꼽힙니다.",
+            "황룡사": "진흥왕이 553년에 짓기 시작한 신라 최대의 사찰입니다. 선덕여왕 때 완성된 9층 목탑은 신라가 삼국을 통일하겠다는 염원을 담았으나, 몽골의 침입으로 불타 사라졌습니다.",
+            "관산성": "554년 백제 성왕이 신라를 공격하다가 전사한 전투가 벌어진 곳입니다. 이 전투의 패배로 나제 동맹이 깨지고, 한강 유역은 신라가 완전히 차지하게 되었습니다.",
+            "우산국(독도)": "512년 신라 지증왕 때 이사부 장군이 나무 사자를 이용한 계략으로 복속시킨 울릉도와 독도 일대의 나라입니다. 독도는 이때부터 우리 영토의 역사가 이어져 왔습니다.",
+            "한강 유역": "삼국 모두가 탐낸 한반도의 중심입니다. 비옥한 평야와 서해를 통해 중국으로 가는 뱃길을 얻을 수 있어, 이곳을 차지한 나라가 삼국 쟁탈전의 주도권을 쥐었습니다."
+        };
+        const NATION_STAMP = { koguryo: '高', baekje: '百', silla: '新' };
+        let regionAfter = null;
+        function showRegionCard(pos, nation, after) {
+            const name = regions[pos];
+            regionAfter = after || null;
+            const modal = document.getElementById('region-modal');
+            modal.classList.remove('n-koguryo', 'n-baekje', 'n-silla'); modal.classList.add('n-' + nation);
+            document.getElementById('rg-name').innerText = name;
+            document.getElementById('rg-hanja').innerText = hanjaMap[name] || '';
+            document.getElementById('rg-desc').innerText = REGION_INFO[name] || '';
+            document.getElementById('rg-banner').innerText = `${nationNamesKo[nation]} 점령!`;
+            document.getElementById('rg-stamp-ch').innerText = NATION_STAMP[nation];
+            const k = iconKey[name];
+            document.getElementById('rg-icon').innerHTML = k ? `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${ICONS[k]}</svg>` : '';
+            const photo = document.querySelector('#region-card .rg-photo'), img = document.getElementById('rg-img');
+            photo.classList.add('nophoto'); img.style.backgroundImage = 'none';
+            // 사진: images/regions/지역이름.(jpg|jpeg|png|webp), 없으면 선 그림 아이콘
+            const base = 'images/regions/' + encodeURIComponent(name), exts = ['jpg', 'jpeg', 'png', 'webp'];
+            (function next(i) {
+                if (i >= exts.length) return;
+                const u = `${base}.${exts[i]}`, t = new Image();
+                t.onload = () => { img.style.backgroundImage = `url('${u}')`; photo.classList.remove('nophoto'); };
+                t.onerror = () => next(i + 1);
+                t.src = u;
+            })(0);
+            const card = document.getElementById('region-card');
+            card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+            img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
+            modal.style.display = 'flex';
+            const rc = card.getBoundingClientRect(), x = rc.left + rc.width / 2, y = rc.top + rc.height * .35;
+            fxStart(); fxFlash(x, y, true);
+            fxBurst(x, y, 80, true, 640);
+            setTimeout(() => fxBurst(rc.right - 46, rc.top + 46, 40, true, 420), 1000);
+            fxConfetti(40);
+            fxPlay('ambient', { el: card, dur: 9999, rate: 20 });
+        }
+        function closeRegionCard() {
+            fxStopAmbient();
+            document.getElementById('region-modal').style.display = 'none';
+            const f = regionAfter; regionAfter = null;
+            if (f) f(); else nextTurn();
+        }
+        let pendingCapture = null;
+
         function showBattleResultPopup(title, detail) {
             const modal = document.getElementById('battle-result-modal');
             const content = document.getElementById('battle-result-content');
@@ -2098,6 +2229,7 @@
 
         function closeBattleResult() {
             document.getElementById('battle-result-modal').style.display = 'none';
+            const cap = pendingCapture; pendingCapture = null;
             // 한강 쟁탈 승리 시 특별 팝업
             if (activeBattleData && activeBattleData._hangangWin) {
                 const nation = players[activeBattleData.aIdx].nation;
@@ -2106,6 +2238,7 @@
                 return;
             }
             activeBattleData = null;
+            if (cap) { showRegionCard(cap.pos, cap.nation); return; }
             nextTurn();
         }
 
