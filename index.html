@@ -1599,8 +1599,8 @@
             document.getElementById('rps-go').style.display = 'none';
             nm.innerHTML = '&nbsp;'; h.className = 'rps-hand spin';
             const pick = Math.floor(Math.random() * 3);
-            let i = Math.floor(Math.random() * 3), delay = 70, n = 0;
-            const total = 16 + Math.floor(Math.random() * 3);
+            let i = Math.floor(Math.random() * 3), delay = 60, n = 0;
+            const total = 8 + Math.floor(Math.random() * 3);
             (function tick() {
                 if (n >= total && i % 3 === pick) {
                     h.className = 'rps-hand land'; h.innerText = RPS[pick].e; nm.innerText = RPS[pick].n + '!';
@@ -1610,7 +1610,7 @@
                 }
                 i = (i + 1) % 3; n++;
                 h.innerText = RPS[i].e;
-                if (n > total - 8) delay += 40;
+                if (n > total - 5) delay += 22;
                 setTimeout(tick, delay);
             })();
         }
