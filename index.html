@@ -576,6 +576,17 @@
             background: radial-gradient(60px 18px at 30px 18px, rgba(130,200,255,.55) 98%, transparent) 0 0/120px 36px repeat-x; animation: waveMove 3s linear infinite; opacity:.8; }
         @keyframes waveMove { to { background-position: 120px 0 } }
 
+        /* 전투 VS 배너 */
+        .bvs { display:flex; align-items:center; justify-content:center; gap:14px; margin:2px 0 12px; font-family:'Noto Serif KR',serif; }
+        .bvs-side { flex:1; max-width:250px; padding:6px 10px 8px; border-radius:12px; color:#fff; border:2px solid #e8c76a; box-shadow:0 4px 12px rgba(0,0,0,.25); }
+        .bvs-side small { display:block; font-size:12px; letter-spacing:.4em; padding-left:.4em; opacity:.85; font-weight:700; }
+        .bvs-side b { display:block; font-size:clamp(30px,6vw,44px); font-weight:900; letter-spacing:.08em; line-height:1.1; text-shadow:0 2px 6px rgba(0,0,0,.4); }
+        .bvs-side.n-koguryo { background:linear-gradient(160deg,#2f63d6,#1e3a8a); } .bvs-side.n-baekje { background:linear-gradient(160deg,#c9382f,#7a1414); } .bvs-side.n-silla { background:linear-gradient(160deg,#2f9a5e,#14532d); }
+        #bvs-att { animation: bvsL .6s cubic-bezier(.2,1.2,.3,1); } #bvs-def { animation: bvsR .6s cubic-bezier(.2,1.2,.3,1); }
+        @keyframes bvsL { from { transform:translateX(-60px); opacity:0 } to { transform:none; opacity:1 } } @keyframes bvsR { from { transform:translateX(60px); opacity:0 } to { transform:none; opacity:1 } }
+        .bvs-vs { font-size:clamp(26px,5vw,38px); font-weight:900; font-style:italic; color:#b91c1c; text-shadow:0 0 10px rgba(255,180,60,.7); animation: vsPop .5s cubic-bezier(.3,1.8,.5,1) .3s both; }
+        @keyframes vsPop { from { transform:scale(0) rotate(-20deg) } to { transform:scale(1) rotate(0) } }
+
         .cell .ico { display:block; line-height:0; margin-bottom:1px; opacity:.88; }
         .cell .ico svg { width: clamp(17px, 3.1vh, 27px); height: clamp(17px, 3.1vh, 27px); fill:none; stroke: currentColor; stroke-width: 1.15; stroke-linecap: round; stroke-linejoin: round; }
         .cell-doom .ico svg { stroke-width: 1.4; filter: drop-shadow(0 0 4px #fff); }
@@ -816,6 +827,11 @@
         <div id="battle-modal-inner" class="bg-white p-5 rounded-3xl max-w-2xl w-full mx-4 shadow-2xl border-4 border-slate-800 text-center">
             <h2 id="battle-modal-title" class="text-2xl font-black mb-1">⚔️ 전투 발생! ⚔️</h2>
             <p id="battle-modal-subtitle" class="text-sm font-bold text-slate-500 mb-4"></p>
+            <div class="bvs">
+                <div id="bvs-att" class="bvs-side"><small>공격</small><b>백제</b></div>
+                <div class="bvs-vs">VS</div>
+                <div id="bvs-def" class="bvs-side"><small>수비</small><b>신라</b></div>
+            </div>
             <canvas id="battle-canvas" width="720" height="320" class="w-full rounded-2xl border-2 border-slate-700 shadow-inner mb-3" style="aspect-ratio:720/320; background:#2e2347;"></canvas>
             <div class="hidden">
                 <div id="attacker-unit" class="flex flex-col items-center">
@@ -1760,6 +1776,10 @@
             const att = players[aIdx];
             const defNation = isCapital ? capitalOwner[pos] : isHangang ? hangangOwner : def.nation;
 
+            { const a = document.getElementById('bvs-att'), d = document.getElementById('bvs-def');
+              a.className = 'bvs-side n-' + att.nation; d.className = 'bvs-side n-' + defNation;
+              a.querySelector('b').innerText = nationNamesKo[att.nation]; d.querySelector('b').innerText = nationNamesKo[defNation];
+              a.style.animation = d.style.animation = 'none'; void a.offsetWidth; a.style.animation = d.style.animation = ''; }
             document.getElementById('attacker-char-box').innerText = nationChars[att.nation];
             document.getElementById('attacker-char-box').className = `w-16 h-16 rounded-full flex items-center justify-center text-white text-3xl font-bold mb-2 p-${att.nation}`;
             document.getElementById('defender-char-box').innerText = nationChars[defNation];
