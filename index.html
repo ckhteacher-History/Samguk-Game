@@ -496,6 +496,10 @@
             animation: stampIn .5s cubic-bezier(.3,1.6,.5,1) 1.0s both; }
         @keyframes stampIn { 0%{ transform: scale(3) rotate(-25deg); opacity:0 } 100%{ transform: scale(1) rotate(-8deg); opacity:1 } }
         .rg-info { padding:18px 28px 22px; text-align:center; }
+        .rg-result { display:none; margin-bottom:10px; padding:10px 14px; border-radius:10px; background: color-mix(in srgb, var(--nc) 10%, #fffaf0); border:1px solid color-mix(in srgb, var(--nc) 45%, #e8c76a); }
+        .rg-result.on { display:block; }
+        #rg-result-msg { font-size:clamp(16px,3.6vw,21px); font-weight:900; color:var(--nc); line-height:1.4; word-break:keep-all; }
+        #rg-result-detail { font-size:13px; font-weight:700; color:#6b5a3d; margin-top:3px; }
         .rg-hanja { font-size:14px; letter-spacing:.45em; color:#8a6a2a; font-weight:700; }
         .rg-name { margin:2px 0 0; font-size:clamp(2rem,6vw,2.8rem); font-weight:900; color:#2b1d0e; letter-spacing:.06em; line-height:1.15; }
         .rg-rule { width:70%; margin:8px auto 10px; display:flex; align-items:center; gap:10px; color:#b88a2a; font-size:12px; }
@@ -796,6 +800,7 @@
                 <div id="rg-banner" class="rg-banner">고구려 점령</div>
             </div>
             <div class="rg-info">
+                <div id="rg-result" class="rg-result"><div id="rg-result-msg"></div><div id="rg-result-detail"></div></div>
                 <div id="rg-hanja" class="rg-hanja">國內城</div>
                 <h2 id="rg-name" class="rg-name">국내성</h2>
                 <div class="rg-rule"><span>❖</span></div>
@@ -1655,10 +1660,13 @@
                 if (idx > -1) nationLands[n].splice(idx, 1);
             }
             nationLands[myNation].push(pos);
-            pendingCapture = { pos, nation: myNation };
+            const rn = regions[pos];
+            const capMsg = (ownerNation && ownerNation !== myNation)
+                ? `${nationNamesKo[myNation]}가 ${nationNamesKo[ownerNation]}의 ${rn}${josa(rn, '을', '를')} 점령했습니다!`
+                : `${nationNamesKo[myNation]}가 새로운 영토 ${rn}${josa(rn, '을', '를')} 점령했습니다!`;
             applyLandColors();
             updateScores();
-            showBattleResultPopup(statusMsg, scoreDetail);
+            showRegionCard(pos, myNation, null, capMsg, scoreDetail);
         }
 
         function showBattleModal(aIdx, def, pos, isCapital, isHangang = false) {
@@ -2162,7 +2170,7 @@
                     scores[att.nation] += attackScore;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
-                    pendingCapture = { pos, nation: att.nation };
+                    { const rn = regions[pos]; pendingCapture = { pos, nation: att.nation, msg: `${nationNamesKo[att.nation]}가 ${nationNamesKo[defNation]}의 수도 ${rn}${josa(rn, '을', '를')} 점령했습니다!`, detail: scoreDetail }; }
                     applyLandColors();
                 } else {
                     statusMsg = `<b class="text-3xl font-black">${nationNamesKo[att.nation]}</b>가 공격에 성공했습니다!`;
@@ -2171,7 +2179,7 @@
                     scores[defNation] -= 50;
                     for (let n in nationLands) { const i = nationLands[n].indexOf(pos); if (i > -1) nationLands[n].splice(i, 1); }
                     nationLands[att.nation].push(pos);
-                    pendingCapture = { pos, nation: att.nation };
+                    { const rn = regions[pos]; pendingCapture = { pos, nation: att.nation, msg: `${nationNamesKo[att.nation]}가 ${nationNamesKo[defNation]}의 ${rn}${josa(rn, '을', '를')} 점령했습니다!`, detail: scoreDetail }; }
                     applyLandColors();
                 }
             } else {
@@ -2193,6 +2201,11 @@
             updateScores();
             stopBattleScene();
             document.getElementById('battle-modal').style.display = 'none';
+            if (pendingCapture) {
+                const c = pendingCapture; pendingCapture = null; activeBattleData = null;
+                showRegionCard(c.pos, c.nation, null, c.msg, c.detail);
+                return;
+            }
             showBattleResultPopup(statusMsg, scoreDetail);
         }
 
@@ -2219,11 +2232,14 @@
         };
         const NATION_STAMP = { koguryo: '高', baekje: '百', silla: '新' };
         let regionAfter = null;
-        function showRegionCard(pos, nation, after) {
+        function josa(w, a, b) { const c = w.charCodeAt(w.length - 1); return (c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0) ? a : b; }
+        function showRegionCard(pos, nation, after, msg, detail) {
             const name = regions[pos];
             regionAfter = after || null;
             const modal = document.getElementById('region-modal');
             modal.classList.remove('n-koguryo', 'n-baekje', 'n-silla'); modal.classList.add('n-' + nation);
+            const rr = document.getElementById('rg-result');
+            if (msg) { document.getElementById('rg-result-msg').innerText = msg; document.getElementById('rg-result-detail').innerText = detail || ''; rr.classList.add('on'); } else rr.classList.remove('on');
             document.getElementById('rg-name').innerText = name;
             document.getElementById('rg-hanja').innerText = hanjaMap[name] || '';
             document.getElementById('rg-desc').innerText = REGION_INFO[name] || '';
