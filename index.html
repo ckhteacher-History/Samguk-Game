@@ -213,6 +213,16 @@
         .score-card .nm-ko { font-size:11px; font-weight:700; opacity:.75; margin-left:5px; }
         .score-card .st { font-size:11px; line-height:1.55; margin-top:3px; color:#4a3718; }
         .score-card .st b { font-weight:900; }
+
+        .score-card .nm-hj { font-size:27px !important; }
+        .score-card .nm-ko { font-size:12px !important; }
+        .st3 { display:flex; gap:8px; margin-top:6px; }
+        .st3 > div { text-align:center; padding:2px 10px 4px; border-radius:8px; background:rgba(255,255,255,.55); border:1px solid rgba(120,90,30,.35); min-width:52px; }
+        .st3 > div.sc { background:rgba(255,246,214,.9); border-color:#c9a24a; min-width:72px; }
+        .st3 small { display:block; font-size:12px; font-weight:800; color:#6b5a3d; letter-spacing:.06em; }
+        .st3 b { display:block; font-size:30px; font-weight:900; line-height:1.1; color:currentColor; font-family:'Noto Serif KR',serif; }
+        .st3 .sc b { font-size:36px; }
+        .st3 small { white-space:nowrap; } @media (max-width:1100px) { .st3 { gap:5px; } .st3 > div { padding:2px 6px 4px; min-width:46px; } .st3 small { font-size:11px; letter-spacing:0; } .st3 b { font-size:26px; } .st3 .sc b { font-size:32px; } }
         .score-card svg { flex:none; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35)); }
 
         .board-wrapper {
@@ -606,24 +616,24 @@
         </div>
         <div class="score-grid">
             <div class="score-card" style="color:#1e3a8a;">
-                <span data-emblem="koguryo" data-size="44"></span>
+                <span data-emblem="koguryo" data-size="58"></span>
                 <div>
                     <div><span class="nm-hj">고구려</span><span class="nm-ko">高句麗 · 靑</span></div>
-                    <div class="st">영토 <b id="land-koguryo">2</b> ｜ 점수 <b id="score-koguryo">0</b><br>인물카드 <b id="cards-koguryo">0</b>장</div>
+                    <div class="st3"><div><small>영토</small><b id="land-koguryo">2</b></div><div class="sc"><small>점수</small><b id="score-koguryo">0</b></div><div><small>인물카드</small><b id="cards-koguryo">0</b></div></div>
                 </div>
             </div>
             <div class="score-card" style="color:#8b1a1a;">
-                <span data-emblem="baekje" data-size="44"></span>
+                <span data-emblem="baekje" data-size="58"></span>
                 <div>
                     <div><span class="nm-hj">백제</span><span class="nm-ko">百濟 · 赤</span></div>
-                    <div class="st">영토 <b id="land-baekje">2</b> ｜ 점수 <b id="score-baekje">0</b><br>인물카드 <b id="cards-baekje">0</b>장</div>
+                    <div class="st3"><div><small>영토</small><b id="land-baekje">2</b></div><div class="sc"><small>점수</small><b id="score-baekje">0</b></div><div><small>인물카드</small><b id="cards-baekje">0</b></div></div>
                 </div>
             </div>
             <div class="score-card" style="color:#14532d;">
-                <span data-emblem="silla" data-size="44"></span>
+                <span data-emblem="silla" data-size="58"></span>
                 <div>
                     <div><span class="nm-hj">신라</span><span class="nm-ko">新羅 · 綠</span></div>
-                    <div class="st">영토 <b id="land-silla">2</b> ｜ 점수 <b id="score-silla">0</b><br>인물카드 <b id="cards-silla">0</b>장</div>
+                    <div class="st3"><div><small>영토</small><b id="land-silla">2</b></div><div class="sc"><small>점수</small><b id="score-silla">0</b></div><div><small>인물카드</small><b id="cards-silla">0</b></div></div>
                 </div>
             </div>
         </div>
@@ -1070,7 +1080,7 @@
         function emblemURL(n){ return 'url("data:image/svg+xml,' + encodeURIComponent(EMBLEM[n](96)) + '")'; }
         function installEmblems(){
             ['koguryo','baekje','silla'].forEach(n => document.documentElement.style.setProperty('--em-'+n, emblemURL(n)));
-            document.querySelectorAll('[data-emblem]').forEach(el => { el.innerHTML = EMBLEM[el.dataset.emblem](+el.dataset.size || 40); el.style.display='block'; el.style.lineHeight='0'; });
+            document.querySelectorAll('[data-emblem]').forEach(el => { el.innerHTML = EMBLEM[el.dataset.emblem](+el.dataset.size || 40, true); el.style.display='block'; el.style.lineHeight='0'; });
         }
         const hanjaMap = {
             "국내성":"國內城","안시성":"安市城","요동성":"遼東城","평양성":"平壤城","졸본성":"卒本城","압록강":"鴨綠江",
@@ -2456,7 +2466,7 @@
             const p = players[turnOrder[turnIndex]];
             const ind = document.getElementById('current-turn-indicator');
             const name = document.getElementById('turn-name');
-            ind.innerHTML = EMBLEM[p.nation](48); name.innerText = p.name;
+            ind.innerHTML = EMBLEM[p.nation](48, true); name.innerText = p.name;
             const colors = { koguryo: 'text-blue-800', baekje: 'text-red-800', silla: 'text-green-800' };
             name.className = `text-lg font-black ${colors[p.nation]}`;
         }
