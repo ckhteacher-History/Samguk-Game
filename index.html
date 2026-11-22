@@ -1651,6 +1651,38 @@
             document.getElementById('trap-modal').style.display = 'flex';
         }
 
+        function handleDoom() {
+            // 모든 영토·점수 초기화 (단, 각 나라의 수도는 그대로 유지)
+            nationLands.koguryo = [capitals.koguryo];
+            nationLands.baekje = [capitals.baekje];
+            nationLands.silla = [capitals.silla];
+            hangangOwner = null; // 한강 유역도 주인 없는 땅으로 되돌림
+            scores.koguryo = 0; scores.baekje = 0; scores.silla = 0;
+            applyLandColors();
+            updateScores();
+            document.getElementById('dm-caps').innerHTML = '유지되는 수도 · ' + ['koguryo', 'baekje', 'silla'].map(n => `${nationNamesKo[n]} <em>${regions[capitals[n]]}</em>`).join(' · ');
+            // 불씨 효과
+            const box = document.getElementById('doom-embers'); box.innerHTML = '';
+            for (let i = 0; i < 70; i++) {
+                const e = document.createElement('div'); e.className = 'dm-ember';
+                const sz = 3 + Math.random() * 7;
+                e.style.cssText = `left:${Math.random() * 100}%; width:${sz}px; height:${sz}px; --dx:${(Math.random() - .5) * 160}px; animation-duration:${3 + Math.random() * 4}s; animation-delay:${Math.random() * 3}s; animation-iteration-count:infinite;`;
+                box.appendChild(e);
+            }
+            const card = document.querySelector('#doom-modal .dm-card');
+            card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+            const fl = document.querySelector('#doom-modal .dm-flash'); fl.style.animation = 'none'; void fl.offsetWidth; fl.style.animation = '';
+            document.body.classList.remove('dm-quake'); void document.body.offsetWidth; document.body.classList.add('dm-quake');
+            setTimeout(() => document.body.classList.remove('dm-quake'), 1300);
+            document.getElementById('doom-modal').style.display = 'flex';
+        }
+
+        function closeDoomModal() {
+            document.getElementById('doom-modal').style.display = 'none';
+            document.getElementById('doom-embers').innerHTML = '';
+            nextTurn();
+        }
+
         function closeTrapModal() {
             document.getElementById('trap-modal').style.display = 'none';
             nextTurn();
